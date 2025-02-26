@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import useForceLandscape from '@/hooks/useForceLandscape';
 
 export default function JoinGame() {
+    useForceLandscape();
     const router = useRouter();
     const [gameCode, setGameCode] = useState('');
     const [name, setName] = useState('');

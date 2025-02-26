@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import useForceLandscape from '@/hooks/useForceLandscape';
 
 export default function CreateGame() {
+    useForceLandscape();
     const router = useRouter();
     const [players, setPlayers] = useState('2');
     const [location, setLocation] = useState('London');

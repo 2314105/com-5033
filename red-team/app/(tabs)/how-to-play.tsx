@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import useForceLandscape from '@/hooks/useForceLandscape';
 
 export default function HowToPlay() {
+    useForceLandscape();
     const router = useRouter();
 
     return (

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
+import useForceLandscape from '@/hooks/useForceLandscape';
 
 export default function GameScreen() {
+    useForceLandscape();
     const router = useRouter();
     const [isTabOpen, setIsTabOpen] = useState(false);
     const slideAnim = new Animated.Value(isTabOpen ? 0 : -200);

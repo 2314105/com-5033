@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import useForceLandscape from '@/hooks/useForceLandscape';
 
 export default function GenerateCode() {
+    useForceLandscape();
     const router = useRouter();
     const [name, setName] = useState('');
     const code = "RG-TC-GI";

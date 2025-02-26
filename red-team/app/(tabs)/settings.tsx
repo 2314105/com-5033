@@ -1,13 +1,14 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import useForceLandscape from '@/hooks/useForceLandscape';
 
 export default function Settings() {
     const router = useRouter();
+    useForceLandscape(); // Apply Landscape Mode
 
     return (
         <View style={styles.container}>
-            {/* Back Button - Top Left */}
             <TouchableOpacity style={styles.backButton} onPress={() => router.push('/')}>
                 <Text style={styles.buttonText}>← Back</Text>
             </TouchableOpacity>
