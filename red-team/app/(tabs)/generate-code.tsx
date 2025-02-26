@@ -11,6 +11,11 @@ export default function GenerateCode() {
 
     return (
         <View style={styles.container}>
+            {/* Back Button - Top Left */}
+            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+                <Text style={styles.buttonText}>← Back</Text>
+            </TouchableOpacity>
+
             <Text style={styles.title}>Generate Code</Text>
 
             <Text style={styles.label}>Enter Your Name:</Text>
@@ -27,10 +32,6 @@ export default function GenerateCode() {
 
             <TouchableOpacity style={styles.button} onPress={() => router.push('/game')}>
                 <Text style={styles.buttonText}>Create</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                <Text style={styles.buttonText}>Back</Text>
             </TouchableOpacity>
         </View>
     );
@@ -77,15 +78,17 @@ const styles = StyleSheet.create({
         marginVertical: 10,
     },
     backButton: {
+        position: 'absolute',
+        top: 20,
+        left: 20,
         backgroundColor: '#D9534F',
-        paddingVertical: 15,
-        paddingHorizontal: 30,
-        borderRadius: 10,
-        marginVertical: 10,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 5,
     },
     buttonText: {
         color: 'white',
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: 'bold',
     },
 });
