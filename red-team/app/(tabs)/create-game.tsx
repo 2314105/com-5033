@@ -10,6 +10,11 @@ export default function CreateGame() {
 
     return (
         <View style={styles.container}>
+            {/* Back Button - Top Left */}
+            <TouchableOpacity style={styles.backButton} onPress={() => router.push('/')}>
+                <Text style={styles.buttonText}>← Back</Text>
+            </TouchableOpacity>
+
             <Text style={styles.title}>Create Game</Text>
 
             <Text style={styles.label}>Select Players:</Text>
@@ -52,6 +57,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: '#282c34',
+        paddingHorizontal: 20,
     },
     title: {
         fontSize: 32,
@@ -90,9 +96,18 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         marginVertical: 20,
     },
+    backButton: {
+        position: 'absolute',
+        top: 20,
+        left: 20,
+        backgroundColor: '#D9534F',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 5,
+    },
     buttonText: {
         color: 'white',
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: 'bold',
     },
 });

@@ -7,6 +7,11 @@ export default function Settings() {
 
     return (
         <View style={styles.container}>
+            {/* Back Button - Top Left */}
+            <TouchableOpacity style={styles.backButton} onPress={() => router.push('/')}>
+                <Text style={styles.buttonText}>← Back</Text>
+            </TouchableOpacity>
+
             <Text style={styles.title}>Settings</Text>
 
             <TouchableOpacity style={styles.button} onPress={() => {}}>
@@ -23,10 +28,6 @@ export default function Settings() {
 
             <TouchableOpacity style={styles.button} onPress={() => {}}>
                 <Text style={styles.buttonText}>Reset Game Data</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                <Text style={styles.buttonText}>Back</Text>
             </TouchableOpacity>
         </View>
     );
@@ -54,11 +55,13 @@ const styles = StyleSheet.create({
         marginVertical: 10,
     },
     backButton: {
+        position: 'absolute',
+        top: 20,
+        left: 20,
         backgroundColor: '#D9534F',
-        paddingVertical: 15,
-        paddingHorizontal: 30,
-        borderRadius: 10,
-        marginVertical: 10,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 5,
     },
     buttonText: {
         color: 'white',

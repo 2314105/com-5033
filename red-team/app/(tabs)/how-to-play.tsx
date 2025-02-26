@@ -7,7 +7,13 @@ export default function HowToPlay() {
 
     return (
         <View style={styles.container}>
+            {/* Back Button - Top Left */}
+            <TouchableOpacity style={styles.backButton} onPress={() => router.push('/')}>
+                <Text style={styles.buttonText}>← Back</Text>
+            </TouchableOpacity>
+
             <Text style={styles.title}>How to Play</Text>
+
             <ScrollView style={styles.scrollContainer}>
                 <Text style={styles.ruleTitle}>Objective:</Text>
                 <Text style={styles.ruleText}>
@@ -33,10 +39,6 @@ export default function HowToPlay() {
                     {'\n'}- Keep track of past movements to predict the next move.
                 </Text>
             </ScrollView>
-
-            <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-                <Text style={styles.buttonText}>Back</Text>
-            </TouchableOpacity>
         </View>
     );
 }
@@ -72,15 +74,17 @@ const styles = StyleSheet.create({
         marginTop: 5,
     },
     backButton: {
+        position: 'absolute',
+        top: 20,
+        left: 20,
         backgroundColor: '#D9534F',
-        paddingVertical: 15,
-        paddingHorizontal: 30,
-        borderRadius: 10,
-        marginVertical: 10,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 5,
     },
     buttonText: {
         color: 'white',
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: 'bold',
     },
 });
