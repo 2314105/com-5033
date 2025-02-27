@@ -12,9 +12,9 @@ export default function JoinGame() {
 
     // Mock lobby data (replace with real data from an API later)
     const [lobbies, setLobbies] = useState([
-        { id: '1', name: 'London Chase', players: 3, maxPlayers: 6, length: 'Short', map: 'London' },
-        { id: '2', name: 'Leeds Pursuit', players: 4, maxPlayers: 5, length: 'Long', map: 'Leeds' },
-        { id: '3', name: 'Horsforth Hideout', players: 2, maxPlayers: 4, length: 'Short', map: 'Horsforth' },
+        { id: '1', hostName: 'Joshua', players: 3, maxPlayers: 6, length: 'Short', map: 'London' },
+        { id: '2', hostName: 'Nick', players: 4, maxPlayers: 5, length: 'Long', map: 'Leeds' },
+        { id: '3', hostName: 'Lesley', players: 2, maxPlayers: 4, length: 'Short', map: 'Horsforth' },
     ]);
 
     return (
@@ -33,13 +33,16 @@ export default function JoinGame() {
                 renderItem={({ item }) => (
                     <View style={[styles.lobbyCard, { width: screenWidth * 0.8 }]}>
                         <View style={styles.lobbyInfoContainer}>
-                            <Text style={styles.lobbyName}>{item.name}</Text>
+                            <Text style={styles.lobbyName}>Host: {item.hostName}</Text>
                             <Text style={styles.lobbyInfo}>Players: {item.players}/{item.maxPlayers}</Text>
                             <Text style={styles.lobbyInfo}>Length: {item.length}</Text>
                             <Text style={styles.lobbyInfo}>Map: {item.map}</Text>
                         </View>
 
-                        {/* Join Button (Bottom Right) */}
+                        {/* Game ID */}
+                        <Text style={styles.gameIdText}>Game ID: {item.id}</Text>
+
+                        {/* Join Button */}
                         <TouchableOpacity style={styles.joinButton} onPress={() => router.push('/join-lobby')}>
                             <Text style={styles.buttonText}>Join</Text>
                         </TouchableOpacity>
@@ -79,12 +82,13 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         padding: 15,
         marginVertical: 10,
-        flexDirection: 'row', // Align Join button to the right
+        flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        position: 'relative',
     },
     lobbyInfoContainer: {
-        flex: 1, // Makes sure the text takes up available space
+        flex: 1,
     },
     lobbyName: {
         fontSize: 20,
@@ -97,12 +101,19 @@ const styles = StyleSheet.create({
         color: 'white',
         marginBottom: 2,
     },
+    gameIdText: {
+        position: 'absolute',
+        top: 5,
+        right: 10,
+        fontSize: 14,
+        color: 'lightgray',
+    },
     joinButton: {
         backgroundColor: '#4CAF50',
         paddingVertical: 10,
         paddingHorizontal: 20,
         borderRadius: 10,
-        alignSelf: 'flex-end', // Aligns the button to the bottom right
+        alignSelf: 'flex-end',
     },
     buttonText: {
         color: 'white',

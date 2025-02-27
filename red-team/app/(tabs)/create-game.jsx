@@ -6,7 +6,6 @@ import useForceLandscape from '@/hooks/useForceLandscape';
 export default function CreateGame() {
     useForceLandscape();
     const router = useRouter();
-    const [gameName, setGameName] = useState('');
     const [hostName, setHostName] = useState('');
     const [gameLength, setGameLength] = useState('Short');
     const [players, setPlayers] = useState('3');
@@ -19,16 +18,6 @@ export default function CreateGame() {
             </TouchableOpacity>
 
             <Text style={styles.title}>Create Game</Text>
-
-            {/* Game Name Input */}
-            <Text style={styles.label}>Game Name:</Text>
-            <TextInput
-                style={styles.input}
-                placeholder="Enter game name"
-                placeholderTextColor="gray"
-                value={gameName}
-                onChangeText={setGameName}
-            />
 
             {/* Host Name Input */}
             <Text style={styles.label}>Host Name:</Text>
@@ -98,11 +87,11 @@ const styles = StyleSheet.create({
     input: {
         width: '80%',
         height: 50,
-        backgroundColor: 'white', // Changed to match JoinGame
+        backgroundColor: 'white',
         borderRadius: 10,
         paddingHorizontal: 10,
         marginVertical: 10,
-        textAlign: 'center', // Centered text like in JoinGame
+        textAlign: 'center',
         fontSize: 18,
     },
     optionContainer: {
