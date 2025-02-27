@@ -1,52 +1,75 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import useForceLandscape from '@/hooks/useForceLandscape';
 
 export default function CreateGame() {
     useForceLandscape();
     const router = useRouter();
-    const [players, setPlayers] = useState('2');
-    const [location, setLocation] = useState('London');
-    const [transport, setTransport] = useState('Taxi');
+    const [gameName, setGameName] = useState('');
+    const [hostName, setHostName] = useState('');
+    const [gameLength, setGameLength] = useState('Short');
+    const [players, setPlayers] = useState('3');
 
     return (
         <View style={styles.container}>
-            {/* Back Button - Top Left */}
+            {/* Back Button */}
             <TouchableOpacity style={styles.backButton} onPress={() => router.push('/')}>
                 <Text style={styles.buttonText}>← Back</Text>
             </TouchableOpacity>
 
             <Text style={styles.title}>Create Game</Text>
 
-            <Text style={styles.label}>Select Players:</Text>
+            {/* Game Name Input */}
+            <Text style={styles.label}>Game Name:</Text>
+            <TextInput
+                style={styles.input}
+                placeholder="Enter game name"
+                placeholderTextColor="gray"
+                value={gameName}
+                onChangeText={setGameName}
+            />
+
+            {/* Host Name Input */}
+            <Text style={styles.label}>Host Name:</Text>
+            <TextInput
+                style={styles.input}
+                placeholder="Enter your name"
+                placeholderTextColor="gray"
+                value={hostName}
+                onChangeText={setHostName}
+            />
+
+            {/* Game Length Toggle */}
+            <Text style={styles.label}>Game Length:</Text>
             <View style={styles.optionContainer}>
-                {["2", "3", "4", "5"].map((value) => (
-                    <TouchableOpacity key={value} style={[styles.optionButton, players === value && styles.selectedOption]} onPress={() => setPlayers(value)}>
+                {["Short", "Long"].map((value) => (
+                    <TouchableOpacity
+                        key={value}
+                        style={[styles.optionButton, gameLength === value && styles.selectedOption]}
+                        onPress={() => setGameLength(value)}
+                    >
+                        <Text style={styles.optionText}>{value}</Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+
+            {/* Player Amount Selection (3-6) */}
+            <Text style={styles.label}>Number of Players:</Text>
+            <View style={styles.optionContainer}>
+                {["3", "4", "5", "6"].map((value) => (
+                    <TouchableOpacity
+                        key={value}
+                        style={[styles.optionButton, players === value && styles.selectedOption]}
+                        onPress={() => setPlayers(value)}
+                    >
                         <Text style={styles.optionText}>{value} Players</Text>
                     </TouchableOpacity>
                 ))}
             </View>
 
-            <Text style={styles.label}>Select Location:</Text>
-            <View style={styles.optionContainer}>
-                {["Horsforth", "Leeds", "Bradford"].map((value) => (
-                    <TouchableOpacity key={value} style={[styles.optionButton, location === value && styles.selectedOption]} onPress={() => setLocation(value)}>
-                        <Text style={styles.optionText}>{value}</Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
-
-            <Text style={styles.label}>Select Transport:</Text>
-            <View style={styles.optionContainer}>
-                {["Taxi", "Bus", "Underground", "Secret Routes"].map((value) => (
-                    <TouchableOpacity key={value} style={[styles.optionButton, transport === value && styles.selectedOption]} onPress={() => setTransport(value)}>
-                        <Text style={styles.optionText}>{value}</Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
-
-            <TouchableOpacity style={styles.button} onPress={() => router.push('/generate-code')}>
+            {/* Confirm Button */}
+            <TouchableOpacity style={styles.button} onPress={() => router.push('/lobby')}>
                 <Text style={styles.buttonText}>Confirm</Text>
             </TouchableOpacity>
         </View>
@@ -71,6 +94,16 @@ const styles = StyleSheet.create({
         fontSize: 18,
         color: 'white',
         marginTop: 10,
+    },
+    input: {
+        width: '80%',
+        height: 50,
+        backgroundColor: 'white', // Changed to match JoinGame
+        borderRadius: 10,
+        paddingHorizontal: 10,
+        marginVertical: 10,
+        textAlign: 'center', // Centered text like in JoinGame
+        fontSize: 18,
     },
     optionContainer: {
         flexDirection: 'row',
