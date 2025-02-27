@@ -9,6 +9,10 @@ export default function GameScreen() {
     const [isTabOpen, setIsTabOpen] = useState(false);
     const slideAnim = new Animated.Value(isTabOpen ? 0 : -200);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
+
+    // Game Info (Temporary, replace with actual game logic)
+    const tickets = { T: 3, B: 2, U: 1, S: 1 }; // Example ticket numbers
 
     // Toggle side tab animation
     const toggleTab = () => {
@@ -28,25 +32,52 @@ export default function GameScreen() {
         }, 300); // Delay navigation slightly to allow modal close animation
     };
 
+    // Function to Handle Ticket Press (Moving)
+    const handleTicketPress = (ticketType) => {
+        alert(`Moving using ${ticketType}`);
+        // Replace this with actual movement logic
+    };
+
     return (
         <View style={styles.container}>
+            {/* Error Message Box */}
+            {errorMessage !== '' && (
+                <View style={styles.errorBox}>
+                    <Text style={styles.errorText}>{errorMessage}</Text>
+                </View>
+            )}
+
             {/* Full-Screen Map Placeholder (Green Background for Now) */}
             <View style={styles.map} />
 
-            {/* Side Tab */}
+            {/* Sidebar for Move History */}
             <Animated.View style={[styles.sideTab, { left: slideAnim }]}>
-                <Text style={styles.tabText}>Moves from X (Coming Soon)</Text>
+                <Text style={styles.tabText}>X’s Moves (Coming Soon)</Text>
             </Animated.View>
 
-            {/* Tab Toggle Button */}
-            <TouchableOpacity style={styles.toggleButton} onPress={toggleTab}>
-                <Text style={styles.buttonText}>{isTabOpen ? 'Close' : 'Open'} Moves</Text>
-            </TouchableOpacity>
+            {/* Top Bar (Moves & Settings) */}
+            <View style={styles.topBar}>
+                {/* Moves Button */}
+                <TouchableOpacity style={styles.topButton} onPress={toggleTab}>
+                    <Text style={styles.topButtonText}>{isTabOpen ? 'Close Moves' : 'Moves'}</Text>
+                </TouchableOpacity>
 
-            {/* Settings Button (Top Right) */}
-            <TouchableOpacity style={styles.settingsButton} onPress={() => setIsSettingsOpen(true)}>
-                <Text style={styles.settingsText}>⚙️</Text>
-            </TouchableOpacity>
+                {/* Settings Button (No Background) */}
+                <TouchableOpacity onPress={() => setIsSettingsOpen(true)}>
+                    <Text style={styles.settingsText}>⚙️</Text>
+                </TouchableOpacity>
+            </View>
+
+            {/* Player Ticket Selection (Inside Opaque Card) */}
+            <View style={styles.infoCard}>
+                <View style={styles.ticketsContainer}>
+                    {Object.entries(tickets).map(([ticket, count]) => (
+                        <TouchableOpacity key={ticket} style={styles.ticket} onPress={() => handleTicketPress(ticket)}>
+                            <Text style={styles.ticketText}>{ticket}: {count}</Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+            </View>
 
             {/* Settings Modal */}
             <Modal
@@ -59,17 +90,16 @@ export default function GameScreen() {
                     <View style={styles.settingsContainer}>
                         <Text style={styles.settingsTitle}>Settings</Text>
 
-                        <TouchableOpacity style={styles.optionButton} onPress={() => alert('Help Selected')}>
-                            <Text style={styles.optionText}>Help</Text>
+                        <TouchableOpacity style={styles.settingsButton} onPress={() => alert('Help Selected')}>
+                            <Text style={styles.buttonText}>Help</Text>
                         </TouchableOpacity>
 
-                        {/* Quit Button (Now Closes Modal Before Navigating) */}
-                        <TouchableOpacity style={styles.optionButton} onPress={handleQuit}>
-                            <Text style={styles.optionText}>Quit</Text>
+                        <TouchableOpacity style={styles.settingsButton} onPress={handleQuit}>
+                            <Text style={styles.buttonText}>Quit</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity style={styles.closeButton} onPress={() => setIsSettingsOpen(false)}>
-                            <Text style={styles.optionText}>Close</Text>
+                            <Text style={styles.buttonText}>Close</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -104,31 +134,56 @@ const styles = StyleSheet.create({
         fontSize: 16,
         textAlign: 'center',
     },
-    toggleButton: {
+    topBar: {
         position: 'absolute',
-        top: 50,
+        top: 20,
         left: 10,
+        right: 10,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    topButton: {
         backgroundColor: '#4CAF50',
         paddingVertical: 10,
         paddingHorizontal: 20,
         borderRadius: 5,
     },
-    buttonText: {
+    topButtonText: {
         color: 'white',
         fontSize: 16,
         fontWeight: 'bold',
     },
-    settingsButton: {
-        position: 'absolute',
-        top: 20,
-        right: 20,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        padding: 10,
-        borderRadius: 50,
-    },
     settingsText: {
-        fontSize: 24,
+        fontSize: 28,
         color: 'white',
+    },
+    infoCard: {
+        position: 'absolute',
+        bottom: 20,
+        left: '50%',
+        transform: [{ translateX: -150 }],
+        width: 350,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)', // Opaque background
+        padding: 15,
+        borderRadius: 10,
+        alignItems: 'center',
+    },
+    ticketsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+    },
+    ticket: {
+        backgroundColor: '#666',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 5,
+        marginHorizontal: 5,
+    },
+    ticketText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: 'bold',
     },
     overlay: {
         flex: 1,
@@ -149,7 +204,7 @@ const styles = StyleSheet.create({
         color: 'white',
         marginBottom: 10,
     },
-    optionButton: {
+    settingsButton: {
         backgroundColor: '#666',
         paddingVertical: 10,
         paddingHorizontal: 20,
@@ -167,7 +222,21 @@ const styles = StyleSheet.create({
         width: '100%',
         alignItems: 'center',
     },
-    optionText: {
+    buttonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    errorBox: {
+        position: 'absolute',
+        top: 10,
+        width: '90%',
+        backgroundColor: 'rgba(255, 0, 0, 0.7)',
+        padding: 10,
+        borderRadius: 5,
+        alignItems: 'center',
+    },
+    errorText: {
         color: 'white',
         fontSize: 16,
     },

@@ -12,7 +12,7 @@ export default function LobbyScreen() {
     const maxPlayers = 6;
     const mapType = "London";
     const gameLength = "Short";
-    const isHost = false; // Change to false to simulate a player
+    const isHost = true; // Change to false to simulate a player
 
     return (
         <View style={styles.background}>
