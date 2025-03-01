@@ -73,7 +73,7 @@ export default function HomePage() {
               <TouchableOpacity key={index} style={styles.gameItem} onPress={() => router.push(`/game/${game.id}`)}>
                 <Text style={styles.gameItemText}>Game ID: {game.gameId}</Text>
                 <Text style={styles.gameItemText}>Host: {game.gameName}</Text>
-                <Text style={styles.gameItemText}>Players: {game.players}</Text>
+                <Text style={styles.gameItemText}>Players: {game.players.length}</Text>
                 <Text style={styles.gameItemText}>Location: {game.mapName}</Text>
               </TouchableOpacity>
             ))}
