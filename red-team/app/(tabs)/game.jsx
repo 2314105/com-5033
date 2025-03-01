@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, Modal, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import useForceLandscape from '@/hooks/useForceLandscape';
 
@@ -13,6 +13,7 @@ export default function GameScreen() {
 
     // Game Info (Temporary, replace with actual game logic)
     const tickets = { T: 3, B: 2, U: 1, S: 1 }; // Example ticket numbers
+    const horsforthMapURI = 'http://trinity-developments.co.uk/images/Horsforth_Game_Map.png';
 
     // Toggle side tab animation
     const toggleTab = () => {
@@ -48,7 +49,13 @@ export default function GameScreen() {
             )}
 
             {/* Full-Screen Map Placeholder (Green Background for Now) */}
-            <View style={styles.map} />
+            <View style={styles.map}>
+                <Image 
+                    source={{ uri: horsforthMapURI }}
+                    style={styles.mapImage}
+                    resizeMode='contain'    
+                />
+            </View>
 
             {/* Sidebar for Move History */}
             <Animated.View style={[styles.sideTab, { left: slideAnim }]}>
@@ -115,7 +122,6 @@ const styles = StyleSheet.create({
     },
     map: {
         flex: 1,
-        backgroundColor: 'green', // Placeholder for map
     },
     sideTab: {
         position: 'absolute',
@@ -239,5 +245,10 @@ const styles = StyleSheet.create({
     errorText: {
         color: 'white',
         fontSize: 16,
+    },
+    mapImage: {
+        flex: 1,
+        width: '100%',
+        height: '100%'
     },
 });

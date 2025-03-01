@@ -9,6 +9,20 @@ export default function CreateGame() {
     const [hostName, setHostName] = useState('');
     const [gameLength, setGameLength] = useState('Short');
     const [players, setPlayers] = useState('3');
+    const gameId = '';
+
+    const handleConfirm = () => {
+        router.push({
+            pathname: '/lobby',
+            params: {
+                hostName: hostName,
+                gameLength: gameLength,
+                players: players,
+                maxPlayers: 6,
+                gameId: gameId,               
+            },
+        });
+    };
 
     return (
         <View style={styles.container}>
@@ -58,7 +72,7 @@ export default function CreateGame() {
             </View>
 
             {/* Confirm Button */}
-            <TouchableOpacity style={styles.button} onPress={() => router.push('/lobby')}>
+            <TouchableOpacity style={styles.button} onPress={handleConfirm}>
                 <Text style={styles.buttonText}>Confirm</Text>
             </TouchableOpacity>
         </View>
