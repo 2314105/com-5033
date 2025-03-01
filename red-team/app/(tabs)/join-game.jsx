@@ -1,21 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, FlatList, StyleSheet, Dimensions } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import useForceLandscape from '@/hooks/useForceLandscape';
 
 export default function JoinGame() {
     useForceLandscape();
     const router = useRouter();
+    const { games } = useLocalSearchParams();
 
     // Get screen width
     const screenWidth = Dimensions.get('window').width;
 
     // Mock lobby data (replace with real data from an API later)
-    const [lobbies, setLobbies] = useState([
-        { id: '1', hostName: 'Joshua', players: 3, maxPlayers: 6, length: 'Short', map: 'London' },
-        { id: '2', hostName: 'Nick', players: 4, maxPlayers: 5, length: 'Long', map: 'Leeds' },
-        { id: '3', hostName: 'Lesley', players: 2, maxPlayers: 4, length: 'Short', map: 'Horsforth' },
-    ]);
+    const [lobbies, setLobbies] = useState([]);
+
+    useEffect(() => {
+        if (games) {
+            setLobbies(JSON.parse(games));
+        }
+    }, [games]);
 
     return (
         <View style={styles.container}>
@@ -29,21 +32,19 @@ export default function JoinGame() {
             {/* Lobby List */}
             <FlatList
                 data={lobbies}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item) => item.gameId.toString()}
                 renderItem={({ item }) => (
                     <View style={[styles.lobbyCard, { width: screenWidth * 0.8 }]}>
                         <View style={styles.lobbyInfoContainer}>
-                            <Text style={styles.lobbyName}>Host: {item.hostName}</Text>
-                            <Text style={styles.lobbyInfo}>Players: {item.players}/{item.maxPlayers}</Text>
-                            <Text style={styles.lobbyInfo}>Length: {item.length}</Text>
-                            <Text style={styles.lobbyInfo}>Map: {item.map}</Text>
+                            <Text style={styles.lobbyName}>Host: {item.gameName}</Text>
+                            <Text style={styles.lobbyInfo}>Map: {item.mapName}</Text>
                         </View>
 
                         {/* Game ID */}
-                        <Text style={styles.gameIdText}>Game ID: {item.id}</Text>
+                        <Text style={styles.gameIdText}>Game ID: {item.gameId}</Text>
 
                         {/* Join Button */}
-                        <TouchableOpacity style={styles.joinButton} onPress={() => router.push('/join-lobby')}>
+                        <TouchableOpacity style={styles.joinButton} onPress={() => router.push(`/game/${item.gameId}`)}>
                             <Text style={styles.buttonText}>Join</Text>
                         </TouchableOpacity>
                     </View>

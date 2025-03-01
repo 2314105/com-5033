@@ -1,18 +1,41 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 
 export default function LobbyScreen() {
     const router = useRouter();
+    const { hostName, gameLength, players, maxPlayers, lobbyName } = useLocalSearchParams();
 
-    // Fake data for now
-    const lobbyName = "Mystery Chase";
-    const hostName = "Joshua";
-    const players = 3;
-    const maxPlayers = 6;
-    const mapType = "London";
-    const gameLength = "Short";
+    const mapType = "Horsforth";
     const isHost = true; // Change to false to simulate a player
+
+    const handleStartGame = async () => {
+        try {
+            const response = await fetch ('http://trinity-developments.co.uk/games', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: hostName,
+                    mapId: 801,
+                    gameLength: gameLength,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`Map with ID {mapId} not found`);
+            }
+
+            const result = await response.json();
+            console.log('Game created: ', result);
+
+            router.push('/game');
+        } catch (error) {
+            console.error('Error creating game: ', error);
+            Alert.alert('Error', 'Failed to start game. Please try again.');
+        }
+    };
 
     return (
         <View style={styles.background}>
@@ -26,7 +49,7 @@ export default function LobbyScreen() {
 
                 {/* Conditional Buttons */}
                 {isHost ? (
-                    <TouchableOpacity style={styles.startButton} onPress={() => router.push('/game')}>
+                    <TouchableOpacity style={styles.startButton} onPress={handleStartGame}>
                         <Text style={styles.buttonText}>Start Game</Text>
                     </TouchableOpacity>
                 ) : (
