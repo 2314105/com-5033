@@ -4,7 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 
 export default function LobbyScreen() {
     const router = useRouter();
-    const { gameId, playerId } = useLocalSearchParams(); // Get gameId & playerId from params
+    const { gameId } = useLocalSearchParams(); // Get gameId from the URL
     const [game, setGame] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -34,44 +34,34 @@ export default function LobbyScreen() {
         fetchGameDetails();
     }, [gameId]);
 
-    // Leave Game & Remove Player from Lobby
-    const handleLeaveGame = async () => {
-        Alert.alert(
-            "Leave Game?",
-            "Are you sure you want to leave the lobby?",
-            [
-                { text: "Cancel", style: "cancel" },
-                {
-                    text: "Yes",
-                    onPress: async () => {
-                        try {
-                            console.log(`Removing playerId: ${playerId} from gameId: ${gameId}`);
+    // Start Game (Only for Host)
+    const handleStartGame = async () => {
+        try {
+            const response = await fetch(`http://trinity-developments.co.uk/games/${gameId}/start/1`, { // ⚠️ Replace 1 with actual playerId later
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+            });
 
-                            const response = await fetch(`http://trinity-developments.co.uk/players/${playerId}`, {
-                                method: 'DELETE',
-                                headers: { 'Content-Type': 'application/json' },
-                            });
+            if (!response.ok) {
+                throw new Error("Failed to start the game.");
+            }
 
-                            if (response.ok) {
-                                console.log("Successfully left game.");
-                                Alert.alert("Success", "You have left the game.");
-                                router.push('/join-game'); // Navigate back to join game screen
-                            } else {
-                                console.error("Failed to leave game.");
-                                Alert.alert("Error", "Failed to leave game. Please try again.");
-                            }
-                        } catch (error) {
-                            console.error("Error leaving game:", error);
-                            Alert.alert("Error", "Failed to leave game.");
-                        }
-                    },
-                },
-            ]
-        );
+            Alert.alert("Game Started!", "The game has begun.");
+            router.push(`/game/${gameId}`); // 🚀 Send players to the game screen
+        } catch (error) {
+            console.error('Error starting game: ', error);
+            Alert.alert('Error', 'Failed to start game. Please try again.');
+        }
+    };
+
+    // Leave Game
+    const handleLeaveGame = () => {
+        Alert.alert("Leaving Game", "Returning to Join Game.");
+        router.push('/join-game');
     };
 
     if (loading) {
-        return <ActivityIndicator size="large" color="white" style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} />;
+        return <ActivityIndicator size="large" color="white" style={styles.loadingIndicator} />;
     }
 
     if (error) {
@@ -80,7 +70,7 @@ export default function LobbyScreen() {
 
     return (
         <View style={styles.container}>
-            {/* Leave Button */}
+            {/* Leave Lobby Button */}
             <TouchableOpacity style={styles.backButton} onPress={handleLeaveGame}>
                 <Text style={styles.buttonText}>← Leave Lobby</Text>
             </TouchableOpacity>
@@ -92,6 +82,13 @@ export default function LobbyScreen() {
             {game.players.map((player) => (
                 <Text key={player.playerId} style={styles.infoText}>{player.playerName}</Text>
             ))}
+
+            {/* Show "Start Game" button only for the host */}
+            {game.hostId === 1 && ( // ⚠️ Replace 1 with actual host playerId
+                <TouchableOpacity style={styles.startButton} onPress={handleStartGame}>
+                    <Text style={styles.buttonText}>Start Game</Text>
+                </TouchableOpacity>
+            )}
         </View>
     );
 }
@@ -103,6 +100,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: '#282c34',
         paddingHorizontal: 20,
+    },
+    loadingIndicator: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     title: {
         fontSize: 28,
@@ -123,6 +125,13 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         paddingHorizontal: 20,
         borderRadius: 5,
+    },
+    startButton: {
+        backgroundColor: '#4CAF50',
+        paddingVertical: 15,
+        paddingHorizontal: 30,
+        borderRadius: 10,
+        marginTop: 20,
     },
     buttonText: {
         color: 'white',

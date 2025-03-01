@@ -1,24 +1,80 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, FlatList, StyleSheet, Dimensions } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { View, Text, TouchableOpacity, TextInput, FlatList, StyleSheet, ActivityIndicator, Alert, Dimensions } from 'react-native';
+import { useRouter } from 'expo-router';
 import useForceLandscape from '@/hooks/useForceLandscape';
 
 export default function JoinGame() {
     useForceLandscape();
     const router = useRouter();
-    const { games } = useLocalSearchParams();
+    const [games, setGames] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [playerName, setPlayerName] = useState(''); // Store player name input
 
     // Get screen width
     const screenWidth = Dimensions.get('window').width;
 
-    // Mock lobby data (replace with real data from an API later)
-    const [lobbies, setLobbies] = useState([]);
-
+    // Fetch open games from API
     useEffect(() => {
-        if (games) {
-            setLobbies(JSON.parse(games));
+        const fetchGames = async () => {
+            try {
+                const response = await fetch('http://trinity-developments.co.uk/games');
+                const data = await response.json();
+
+                if (response.ok) {
+                    const sortedGames = data.games.sort((a, b) => b.gameId - a.gameId);
+                    setGames(sortedGames);
+                } else {
+                    setError(data.message || 'Failed to fetch games.');
+                }
+            } catch (err) {
+                console.error('Failed to fetch games:', err);
+                setError('Error fetching games. Please try again.');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchGames();
+    }, []);
+
+    const handleJoinGame = async (gameId) => {
+        if (!playerName.trim()) {
+            Alert.alert("Enter Name", "Please enter a player name before joining.");
+            return;
         }
-    }, [games]);
+
+        try {
+            console.log(`Joining game: ${gameId} as ${playerName}`);
+            const response = await fetch(`http://trinity-developments.co.uk/games/${gameId}/players`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    playerName: playerName, // Use entered player name
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                console.log('Joined game successfully:', data);
+
+                // 🚀 Navigate to the lobby with gameId and playerId
+                router.push({
+                    pathname: `/lobby/${gameId}`,
+                    params: { gameId: gameId, playerId: data.playerId },
+                });
+            } else {
+                console.warn("API error:", data.message);
+                Alert.alert("Error", data.message || "Failed to join game.");
+            }
+        } catch (error) {
+            console.error('Error joining game:', error);
+            Alert.alert('Error', 'Failed to join game. Please try again.');
+        }
+    };
 
     return (
         <View style={styles.container}>
@@ -29,27 +85,45 @@ export default function JoinGame() {
 
             <Text style={styles.title}>Join a Game</Text>
 
-            {/* Lobby List */}
-            <FlatList
-                data={lobbies}
-                keyExtractor={(item) => item.gameId.toString()}
-                renderItem={({ item }) => (
-                    <View style={[styles.lobbyCard, { width: screenWidth * 0.8 }]}>
-                        <View style={styles.lobbyInfoContainer}>
-                            <Text style={styles.lobbyName}>Host: {item.gameName}</Text>
-                            <Text style={styles.lobbyInfo}>Map: {item.mapName}</Text>
-                        </View>
-
-                        {/* Game ID */}
-                        <Text style={styles.gameIdText}>Game ID: {item.gameId}</Text>
-
-                        {/* Join Button */}
-                        <TouchableOpacity style={styles.joinButton} onPress={() => router.push(`/game/${item.gameId}`)}>
-                            <Text style={styles.buttonText}>Join</Text>
-                        </TouchableOpacity>
-                    </View>
-                )}
+            {/* Player Name Input */}
+            <Text style={styles.label}>Enter Your Name:</Text>
+            <TextInput
+                style={styles.input}
+                placeholder="Your Name"
+                placeholderTextColor="gray"
+                value={playerName}
+                onChangeText={setPlayerName}
             />
+
+            {/* Error Message */}
+            {error && <Text style={styles.errorText}>{error}</Text>}
+
+            {/* Loading Indicator */}
+            {loading ? (
+                <ActivityIndicator size="large" color="white" />
+            ) : (
+                <FlatList
+                    data={games}
+                    keyExtractor={(item) => item.gameId.toString()}
+                    renderItem={({ item }) => (
+                        <View style={[styles.lobbyCard, { width: screenWidth * 0.8 }]}>
+                            <View style={styles.lobbyInfoContainer}>
+                                <Text style={styles.lobbyName}>{item.gameName || 'Unnamed Game'}</Text>
+                                <Text style={styles.lobbyInfo}>Map: {item.mapName}</Text>
+                                <Text style={styles.lobbyInfo}>Players: {item.players.length}</Text>
+                            </View>
+
+                            {/* Join Game Button */}
+                            <TouchableOpacity
+                                style={styles.joinButton}
+                                onPress={() => handleJoinGame(item.gameId)}
+                            >
+                                <Text style={styles.buttonText}>Join</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                />
+            )}
         </View>
     );
 }
@@ -69,6 +143,21 @@ const styles = StyleSheet.create({
         color: 'white',
         marginBottom: 20,
     },
+    label: {
+        fontSize: 18,
+        color: 'white',
+        marginTop: 10,
+    },
+    input: {
+        width: '80%',
+        height: 50,
+        backgroundColor: 'white',
+        borderRadius: 10,
+        paddingHorizontal: 10,
+        marginVertical: 10,
+        textAlign: 'center',
+        fontSize: 18,
+    },
     backButton: {
         position: 'absolute',
         top: 20,
@@ -77,6 +166,11 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         paddingHorizontal: 20,
         borderRadius: 5,
+    },
+    errorText: {
+        color: 'red',
+        fontSize: 18,
+        marginBottom: 10,
     },
     lobbyCard: {
         backgroundColor: '#444',
@@ -101,13 +195,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: 'white',
         marginBottom: 2,
-    },
-    gameIdText: {
-        position: 'absolute',
-        top: 5,
-        right: 10,
-        fontSize: 14,
-        color: 'lightgray',
     },
     joinButton: {
         backgroundColor: '#4CAF50',
