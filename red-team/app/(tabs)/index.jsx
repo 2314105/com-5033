@@ -33,15 +33,28 @@ export default function HomePage() {
 
   const navigateToJoinGame = async () => {
     setNavigationLoading(true);
-    await joinGame();
-    if (games.length > 0) {
-      setTimeout(() => {
-        router.push({ pathname: '/join-game', params: { games: JSON.stringify(games) } });
-        setNavigationLoading(false);
-      }, 250)
-    } else {
-        console.log("Games array is empty");
-        setNavigationLoading(false);
+    setError(null);
+
+    try {
+      const response = await fetch(getGamesURL);
+      const data = await response.json();
+
+      if (response.ok) {
+        const sortedGames = data.games.sort((a, b) => b.gameId - a.gameId);
+
+        if (sortedGames.length > 0) {
+          router.push({ pathname: '/join-game', params: { games: JSON.stringify(sortedGames) } });
+        } else {
+          Alert.alert("No Games Available", "There are no open lobbies to join at the moment.");
+        }
+      } else {
+        setError("Failed to load games.");
+      }
+    } catch (error) {
+      console.error("Error fetching games:", error);
+      setError("Error fetching games.");
+    } finally {
+      setNavigationLoading(false);
     }
   };
 
@@ -73,7 +86,7 @@ export default function HomePage() {
               <TouchableOpacity key={index} style={styles.gameItem} onPress={() => router.push(`/game/${game.id}`)}>
                 <Text style={styles.gameItemText}>Game ID: {game.gameId}</Text>
                 <Text style={styles.gameItemText}>Host: {game.gameName}</Text>
-                <Text style={styles.gameItemText}>Players: {game.players}</Text>
+                <Text style={styles.gameItemText}>Players: {game.players.length}</Text>
                 <Text style={styles.gameItemText}>Location: {game.mapName}</Text>
               </TouchableOpacity>
             ))}

@@ -1,27 +1,55 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import useForceLandscape from '@/hooks/useForceLandscape';
 
 export default function CreateGame() {
     useForceLandscape();
     const router = useRouter();
-    const [hostName, setHostName] = useState('');
-    const [gameLength, setGameLength] = useState('Short');
-    const [players, setPlayers] = useState('3');
-    const gameId = '';
 
-    const handleConfirm = () => {
-        router.push({
-            pathname: '/lobby',
-            params: {
-                hostName: hostName,
-                gameLength: gameLength,
-                players: players,
-                maxPlayers: 6,
-                gameId: gameId,               
-            },
-        });
+    // State variables
+    const [gameName, setGameName] = useState('');
+    const [gameLength, setGameLength] = useState('Short'); // "Short" or "Long"
+    const [mapId, setMapId] = useState(801); // Default: "Horsforth"
+    const [loading, setLoading] = useState(false);
+
+    const handleConfirm = async () => {
+        if (!gameName.trim()) {
+            Alert.alert("Error", "Please enter a game name.");
+            return;
+        }
+
+        setLoading(true); // Show loading state
+
+        try {
+            const response = await fetch('http://trinity-developments.co.uk/games', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: gameName,
+                    gameLength: gameLength.toLowerCase(), // API expects "short" or "long"
+                    mapId: mapId // Default: 801 (Horsforth)
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                Alert.alert("Success", `Game "${gameName}" created successfully!`);
+
+                // 🚀 Navigate back to **Home Page** instead of Join Game
+                router.push('/');
+            } else {
+                Alert.alert("Error", data.message || "Failed to create game.");
+            }
+        } catch (error) {
+            console.error("Failed to create game:", error);
+            Alert.alert("Error", "Failed to create game. Please try again.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -33,17 +61,17 @@ export default function CreateGame() {
 
             <Text style={styles.title}>Create Game</Text>
 
-            {/* Host Name Input */}
-            <Text style={styles.label}>Host Name:</Text>
+            {/* Game Name Input */}
+            <Text style={styles.label}>Game Name:</Text>
             <TextInput
                 style={styles.input}
-                placeholder="Enter your name"
+                placeholder="Enter game name"
                 placeholderTextColor="gray"
-                value={hostName}
-                onChangeText={setHostName}
+                value={gameName}
+                onChangeText={setGameName}
             />
 
-            {/* Game Length Toggle */}
+            {/* Game Length Selection */}
             <Text style={styles.label}>Game Length:</Text>
             <View style={styles.optionContainer}>
                 {["Short", "Long"].map((value) => (
@@ -57,23 +85,9 @@ export default function CreateGame() {
                 ))}
             </View>
 
-            {/* Player Amount Selection (3-6) */}
-            <Text style={styles.label}>Number of Players:</Text>
-            <View style={styles.optionContainer}>
-                {["3", "4", "5", "6"].map((value) => (
-                    <TouchableOpacity
-                        key={value}
-                        style={[styles.optionButton, players === value && styles.selectedOption]}
-                        onPress={() => setPlayers(value)}
-                    >
-                        <Text style={styles.optionText}>{value} Players</Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
-
             {/* Confirm Button */}
-            <TouchableOpacity style={styles.button} onPress={handleConfirm}>
-                <Text style={styles.buttonText}>Confirm</Text>
+            <TouchableOpacity style={styles.button} onPress={handleConfirm} disabled={loading}>
+                {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Confirm</Text>}
             </TouchableOpacity>
         </View>
     );
