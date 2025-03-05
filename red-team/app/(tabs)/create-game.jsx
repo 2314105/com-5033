@@ -8,12 +8,17 @@ export default function CreateGame() {
     const router = useRouter();
 
     // State variables
+    const [playerName, setPlayerName] = useState(''); // Player's name
     const [gameName, setGameName] = useState('');
     const [gameLength, setGameLength] = useState('Short'); // "Short" or "Long"
     const [mapId, setMapId] = useState(801); // Default: "Horsforth"
     const [loading, setLoading] = useState(false);
 
     const handleConfirm = async () => {
+        if (!playerName.trim()) {
+            Alert.alert("Error", "Please enter your name.");
+            return;
+        }
         if (!gameName.trim()) {
             Alert.alert("Error", "Please enter a game name.");
             return;
@@ -22,7 +27,8 @@ export default function CreateGame() {
         setLoading(true); // Show loading state
 
         try {
-            const response = await fetch('http://trinity-developments.co.uk/games', {
+            // Step 1: Create the game
+            const createResponse = await fetch('http://trinity-developments.co.uk/games', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -34,19 +40,48 @@ export default function CreateGame() {
                 }),
             });
 
-            const data = await response.json();
+            const createData = await createResponse.json();
 
-            if (response.ok) {
-                Alert.alert("Success", `Game "${gameName}" created successfully!`);
-
-                // 🚀 Navigate back to **Home Page** instead of Join Game
-                router.push('/');
-            } else {
-                Alert.alert("Error", data.message || "Failed to create game.");
+            if (!createResponse.ok) {
+                Alert.alert("Error", createData.message || "Failed to create game.");
+                setLoading(false);
+                return;
             }
+
+            const gameId = createData.gameId;
+            console.log("Game created successfully:", gameId);
+
+            // Step 2: Join the game as the host with their name
+            const joinResponse = await fetch(`http://trinity-developments.co.uk/games/${gameId}/players`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    playerName: playerName,
+                }),
+            });
+
+            const joinData = await joinResponse.json();
+
+            if (!joinResponse.ok) {
+                Alert.alert("Error", joinData.message || "Failed to join game as host.");
+                setLoading(false);
+                return;
+            }
+
+            const playerId = joinData.playerId;
+            console.log(`Joined game successfully as host: ${playerId} (Name: ${playerName})`);
+
+            // Navigate directly to the lobby with `gameId` and `playerId`
+            router.push({
+                pathname: `/lobby/${gameId}`,
+                params: { gameId, playerId }
+            });
+
         } catch (error) {
-            console.error("Failed to create game:", error);
-            Alert.alert("Error", "Failed to create game. Please try again.");
+            console.error("Failed to create/join game:", error);
+            Alert.alert("Error", "Failed to create/join game. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -54,12 +89,22 @@ export default function CreateGame() {
 
     return (
         <View style={styles.container}>
-            {/* Back Button */}
+            {/* Back Button - Top Left */}
             <TouchableOpacity style={styles.backButton} onPress={() => router.push('/')}>
                 <Text style={styles.buttonText}>← Back</Text>
             </TouchableOpacity>
 
             <Text style={styles.title}>Create Game</Text>
+
+            {/* Player Name Input */}
+            <Text style={styles.label}>Your Name:</Text>
+            <TextInput
+                style={styles.input}
+                placeholder="Enter your name"
+                placeholderTextColor="gray"
+                value={playerName}
+                onChangeText={setPlayerName}
+            />
 
             {/* Game Name Input */}
             <Text style={styles.label}>Game Name:</Text>
@@ -85,8 +130,8 @@ export default function CreateGame() {
                 ))}
             </View>
 
-            {/* Confirm Button */}
-            <TouchableOpacity style={styles.button} onPress={handleConfirm} disabled={loading}>
+            {/* Confirm Button - Bottom Right */}
+            <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm} disabled={loading}>
                 {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Confirm</Text>}
             </TouchableOpacity>
         </View>
@@ -141,13 +186,6 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 16,
     },
-    button: {
-        backgroundColor: '#4CAF50',
-        paddingVertical: 15,
-        paddingHorizontal: 30,
-        borderRadius: 10,
-        marginVertical: 20,
-    },
     backButton: {
         position: 'absolute',
         top: 20,
@@ -155,6 +193,15 @@ const styles = StyleSheet.create({
         backgroundColor: '#D9534F',
         paddingVertical: 10,
         paddingHorizontal: 20,
+        borderRadius: 5,
+    },
+    confirmButton: {
+        position: 'absolute',
+        bottom: 20,
+        right: 20,
+        backgroundColor: '#4CAF50',
+        paddingVertical: 15,
+        paddingHorizontal: 30,
         borderRadius: 5,
     },
     buttonText: {
