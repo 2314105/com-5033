@@ -1,43 +1,19 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, Modal, Image } from 'react-native';
-import { useRouter } from 'expo-router';
 import useForceLandscape from '@/hooks/useForceLandscape';
+import { useGame } from '@/hooks/useGame';
 
 export default function GameScreen() {
     useForceLandscape();
-    const router = useRouter();
-    const [isTabOpen, setIsTabOpen] = useState(false);
-    const slideAnim = new Animated.Value(isTabOpen ? 0 : -200);
-    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
+    const {
+        isSettingsOpen, setIsSettingsOpen,
+        errorMessage, isTabOpen, toggleTab, slideAnim,
+        handleQuit, handleTicketPress
+    } = useGame();
 
-    // Game Info (Temporary, replace with actual game logic)
-    const tickets = { T: 3, B: 2, U: 1, S: 1 }; // Example ticket numbers
+    // Example ticket numbers (replace with actual game logic)
+    const tickets = { T: 3, B: 2, U: 1, S: 1 };
     const horsforthMapURI = 'http://trinity-developments.co.uk/images/Horsforth_Game_Map.png';
-
-    // Toggle side tab animation
-    const toggleTab = () => {
-        Animated.timing(slideAnim, {
-            toValue: isTabOpen ? -200 : 0,
-            duration: 300,
-            useNativeDriver: false,
-        }).start();
-        setIsTabOpen(!isTabOpen);
-    };
-
-    // Function to Quit: Close Settings First, Then Navigate
-    const handleQuit = () => {
-        setIsSettingsOpen(false);
-        setTimeout(() => {
-            router.push('/');
-        }, 300); // Delay navigation slightly to allow modal close animation
-    };
-
-    // Function to Handle Ticket Press (Moving)
-    const handleTicketPress = (ticketType) => {
-        alert(`Moving using ${ticketType}`);
-        // Replace this with actual movement logic
-    };
 
     return (
         <View style={styles.container}>
@@ -48,13 +24,9 @@ export default function GameScreen() {
                 </View>
             )}
 
-            {/* Full-Screen Map Placeholder (Green Background for Now) */}
+            {/* Full-Screen Map */}
             <View style={styles.map}>
-                <Image 
-                    source={{ uri: horsforthMapURI }}
-                    style={styles.mapImage}
-                    resizeMode='contain'    
-                />
+                <Image source={{ uri: horsforthMapURI }} style={styles.mapImage} resizeMode='contain' />
             </View>
 
             {/* Sidebar for Move History */}
@@ -64,18 +36,16 @@ export default function GameScreen() {
 
             {/* Top Bar (Moves & Settings) */}
             <View style={styles.topBar}>
-                {/* Moves Button */}
                 <TouchableOpacity style={styles.topButton} onPress={toggleTab}>
                     <Text style={styles.topButtonText}>{isTabOpen ? 'Close Moves' : 'Moves'}</Text>
                 </TouchableOpacity>
 
-                {/* Settings Button (No Background) */}
                 <TouchableOpacity onPress={() => setIsSettingsOpen(true)}>
                     <Text style={styles.settingsText}>⚙️</Text>
                 </TouchableOpacity>
             </View>
 
-            {/* Player Ticket Selection (Inside Opaque Card) */}
+            {/* Player Ticket Selection */}
             <View style={styles.infoCard}>
                 <View style={styles.ticketsContainer}>
                     {Object.entries(tickets).map(([ticket, count]) => (
@@ -87,12 +57,7 @@ export default function GameScreen() {
             </View>
 
             {/* Settings Modal */}
-            <Modal
-                transparent={true}
-                animationType="fade"
-                visible={isSettingsOpen}
-                onRequestClose={() => setIsSettingsOpen(false)}
-            >
+            <Modal transparent={true} animationType="fade" visible={isSettingsOpen} onRequestClose={() => setIsSettingsOpen(false)}>
                 <View style={styles.overlay}>
                     <View style={styles.settingsContainer}>
                         <Text style={styles.settingsTitle}>Settings</Text>

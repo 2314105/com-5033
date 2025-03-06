@@ -1,80 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, TextInput, FlatList, StyleSheet, ActivityIndicator, Alert, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import useForceLandscape from '@/hooks/useForceLandscape';
+import { useJoinGame } from '@/hooks/useJoinGame'; // Import the extracted hook
 
 export default function JoinGame() {
     useForceLandscape();
     const router = useRouter();
-    const [games, setGames] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [playerName, setPlayerName] = useState(''); // Store player name input
+    const { games, loading, error, joinGame } = useJoinGame(); // Use the custom hook
+    const [playerName, setPlayerName] = useState('');
 
     // Get screen width
     const screenWidth = Dimensions.get('window').width;
-
-    // Fetch open games from API
-    useEffect(() => {
-        const fetchGames = async () => {
-            try {
-                const response = await fetch('http://trinity-developments.co.uk/games');
-                const data = await response.json();
-
-                if (response.ok) {
-                    const sortedGames = data.games.sort((a, b) => b.gameId - a.gameId);
-                    setGames(sortedGames);
-                } else {
-                    setError(data.message || 'Failed to fetch games.');
-                }
-            } catch (err) {
-                console.error('Failed to fetch games:', err);
-                setError('Error fetching games. Please try again.');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchGames();
-    }, []);
-
-    const handleJoinGame = async (gameId) => {
-        if (!playerName.trim()) {
-            Alert.alert("Enter Name", "Please enter a player name before joining.");
-            return;
-        }
-
-        try {
-            console.log(`Joining game: ${gameId} as ${playerName}`);
-            const response = await fetch(`http://trinity-developments.co.uk/games/${gameId}/players`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    playerName: playerName, // Use entered player name
-                }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                console.log('Joined game successfully:', data);
-
-                // 🚀 Navigate to the lobby with gameId and playerId
-                router.push({
-                    pathname: `/game/${gameId}`,
-                    params: { playerId: data.playerId },
-                });
-            } else {
-                console.warn("API error:", data.message);
-                Alert.alert("Error", data.message || "Failed to join game.");
-            }
-        } catch (error) {
-            console.error('Error joining game:', error);
-            Alert.alert('Error', 'Failed to join game. Please try again.');
-        }
-    };
 
     return (
         <View style={styles.container}>
@@ -116,7 +53,7 @@ export default function JoinGame() {
                             {/* Join Game Button */}
                             <TouchableOpacity
                                 style={styles.joinButton}
-                                onPress={() => handleJoinGame(item.gameId)}
+                                onPress={() => joinGame(item.gameId, playerName, router)}
                             >
                                 <Text style={styles.buttonText}>Join</Text>
                             </TouchableOpacity>

@@ -1,77 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import useForceLandscape from '@/hooks/useForceLandscape';
+import { useCreateGame } from '@/hooks/useCreateGame'; // Import custom hook
 
 export default function CreateGame() {
     useForceLandscape();
     const router = useRouter();
+    const { createAndJoinGame, loading } = useCreateGame();
 
-    // State variables
-    const [playerName, setPlayerName] = useState(''); // Player's name
+    // State variables for form inputs
+    const [playerName, setPlayerName] = useState('');
     const [gameName, setGameName] = useState('');
-    const [gameLength, setGameLength] = useState('Short'); // "Short" or "Long"
-    const [mapId, setMapId] = useState(801); // Default: "Horsforth"
-    const [loading, setLoading] = useState(false);
-    const [hasNavigated, setNavigated] = useState(false);
-
-    const handleConfirm = async () => {
-        if (!playerName.trim() || !gameName.trim() || loading || hasNavigated) return;
-        
-        setLoading(true); // Show loading state
-
-        try {
-            // Step 1: Create the game
-            const createResponse = await fetch('http://trinity-developments.co.uk/games', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    name: gameName,
-                    gameLength: gameLength.toLowerCase(), // API expects "short" or "long"
-                    mapId: mapId // Default: 801 (Horsforth)
-                }),
-            });
-
-            const createData = await createResponse.json();
-            if (!createResponse.ok) {
-                Alert.alert("Error", createData.message || "Failed to create game.");
-                setLoading(false);
-                return;
-            }
-
-            const gameId = createData.gameId;
-            console.log("Game created successfully:", gameId);
-
-            // Step 2: Join the game as the host with their name
-            const joinResponse = await fetch(`http://trinity-developments.co.uk/games/${gameId}/players`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({playerName: playerName}),
-            });
-
-            const joinData = await joinResponse.json();
-            if (!joinResponse.ok) {
-                Alert.alert("Error", joinData.message || "Failed to join game as host.");
-                setLoading(false);
-                return;
-            }
-
-            const playerId = joinData.playerId;
-            console.log(`Joined game successfully as host: ${playerId} (Name: ${playerName})`);
-
-            setNavigated(true);
-            // Navigate directly to the lobby with `gameId` and `playerId`
-            router.push(`/lobby/${gameId}?playerId=${playerId}`);
-
-        } catch (error) {
-            console.error("Failed to create/join game:", error);
-            Alert.alert("Error", "Failed to create/join game. Please try again.");
-        } finally {
-            setLoading(false);
-        }
-    };
+    const [gameLength, setGameLength] = useState('Short');
+    const [mapId, setMapId] = useState(801);
 
     return (
         <View style={styles.container}>
@@ -117,7 +59,11 @@ export default function CreateGame() {
             </View>
 
             {/* Confirm Button - Bottom Right */}
-            <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm} disabled={loading}>
+            <TouchableOpacity
+                style={styles.confirmButton}
+                onPress={() => createAndJoinGame(gameName, playerName, gameLength, mapId, router)}
+                disabled={loading}
+            >
                 {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Confirm</Text>}
             </TouchableOpacity>
         </View>

@@ -1,62 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import useForceLandscape from '@/hooks/useForceLandscape';
+import { useGameAPI } from '@/hooks/useGameAPI'; // Import custom API hook
 
 export default function HomePage() {
   useForceLandscape();
-  const getGamesURL = 'http://trinity-developments.co.uk/games';
   const router = useRouter();
-  const [games, setGames] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [navigationLoading, setNavigationLoading] = useState(false);
+  const { games, loading, error, navigationLoading, fetchGames, navigateToJoinGame } = useGameAPI();
 
-  const joinGame = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(getGamesURL);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      setGames(data.games);
-    } catch (e) {
-      setError(e.message);
-      console.error('Error fetching games: ', e);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const navigateToJoinGame = async () => {
-    setNavigationLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(getGamesURL);
-      const data = await response.json();
-
-      if (response.ok) {
-        const sortedGames = data.games.sort((a, b) => b.gameId - a.gameId);
-
-        if (sortedGames.length > 0) {
-          router.push({ pathname: '/join-game', params: { games: JSON.stringify(sortedGames) } });
-        } else {
-          Alert.alert("No Games Available", "There are no open lobbies to join at the moment.");
-        }
-      } else {
-        setError("Failed to load games.");
-      }
-    } catch (error) {
-      console.error("Error fetching games:", error);
-      setError("Error fetching games.");
-    } finally {
-      setNavigationLoading(false);
-    }
-  };
+  // Fetch games when the component loads
+  useEffect(() => {
+    fetchGames();
+  }, []);
 
   return (
       <View style={styles.container}>
@@ -66,7 +22,7 @@ export default function HomePage() {
           <Text style={styles.buttonText}>Create Game</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={navigateToJoinGame}>
+        <TouchableOpacity style={styles.button} onPress={() => navigateToJoinGame(router)}>
           <Text style={styles.buttonText}>Join Game</Text>
         </TouchableOpacity>
 
@@ -80,24 +36,24 @@ export default function HomePage() {
 
         {loading && <Text>Loading...</Text>}
 
-        {games  && (
-          <ScrollView style={styles.gamesList}>
-            {games.map((game, index) => (
-              <TouchableOpacity key={index} style={styles.gameItem} onPress={() => router.push(`/game/${game.id}`)}>
-                <Text style={styles.gameItemText}>Game ID: {game.gameId}</Text>
-                <Text style={styles.gameItemText}>Host: {game.gameName}</Text>
-                <Text style={styles.gameItemText}>Players: {game.players.length}</Text>
-                <Text style={styles.gameItemText}>Location: {game.mapName}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+        {games.length > 0 && (
+            <ScrollView style={styles.gamesList}>
+              {games.map((game, index) => (
+                  <TouchableOpacity key={index} style={styles.gameItem} onPress={() => router.push(`/game/${game.gameId}`)}>
+                    <Text style={styles.gameItemText}>Game ID: {game.gameId}</Text>
+                    <Text style={styles.gameItemText}>Host: {game.gameName}</Text>
+                    <Text style={styles.gameItemText}>Players: {game.players.length}</Text>
+                    <Text style={styles.gameItemText}>Location: {game.mapName}</Text>
+                  </TouchableOpacity>
+              ))}
+            </ScrollView>
         )}
 
         {navigationLoading && (
-          <View style={styles.overlay}>
-            <ActivityIndicator size="large" color="#fff"/>
-            <Text style={styles.overlayText}>Loading Games...</Text>
-          </View>
+            <View style={styles.overlay}>
+              <ActivityIndicator size="large" color="#fff" />
+              <Text style={styles.overlayText}>Loading Games...</Text>
+            </View>
         )}
       </View>
   );
@@ -134,16 +90,16 @@ const styles = StyleSheet.create({
   gamesList: {
     marginTop: 20,
     width: '100%',
-    maxWidth: 300
+    maxWidth: 300,
   },
   gameItem: {
     backgroundColor: '#333',
     padding: 15,
     marginVertical: 5,
-    borderRadius: 8
+    borderRadius: 8,
   },
   gameItemText: {
-    color: 'white'
+    color: 'white',
   },
   overlay: {
     position: 'absolute',
@@ -151,13 +107,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 10
+    zIndex: 10,
   },
   overlayText: {
     color: 'white',
-    marginTop: 10
-  }
+    marginTop: 10,
+  },
 });
