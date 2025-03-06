@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 
 export default function LobbyScreen() {
     const router = useRouter();
-    const { gameId } = useLocalSearchParams(); // Get gameId from the URL
+    const { gameId, playerId } = useLocalSearchParams(); // Get gameId from the URL
     const [game, setGame] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [isHost, setIsHost] = useState(false);
+    const isHostSet = useRef(false);
 
     // Fetch game details when entering the lobby
     useEffect(() => {
@@ -20,6 +22,15 @@ export default function LobbyScreen() {
                 if (response.ok) {
                     console.log("Game data:", data);
                     setGame(data);
+
+                    if (!isHostSet.current) {
+                        const firstPlayerId = String(data.players[0].playerId);
+                        const currentPlayerId = String(playerId);
+
+                        const hostCheck = firstPlayerId === currentPlayerId;
+                        setIsHost(hostCheck);
+                        isHostSet.current = true;
+                    }
                 } else {
                     setError("Failed to load game details.");
                 }
@@ -32,12 +43,17 @@ export default function LobbyScreen() {
         };
 
         fetchGameDetails();
-    }, [gameId]);
+
+        return () => {
+            isHostSet.current = false;
+        };
+
+    }, [gameId, playerId]);
 
     // Start Game (Only for Host)
     const handleStartGame = async () => {
         try {
-            const response = await fetch(`http://trinity-developments.co.uk/games/${gameId}/start/1`, { // ⚠️ Replace 1 with actual playerId later
+            const response = await fetch(`http://trinity-developments.co.uk/games/${gameId}/start/${playerId}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
             });
@@ -84,7 +100,7 @@ export default function LobbyScreen() {
             ))}
 
             {/* Show "Start Game" button only for the host */}
-            {game.hostId === 1 && ( // ⚠️ Replace 1 with actual host playerId
+            {isHost && (
                 <TouchableOpacity style={styles.startButton} onPress={handleStartGame}>
                     <Text style={styles.buttonText}>Start Game</Text>
                 </TouchableOpacity>

@@ -63,8 +63,8 @@ export default function JoinGame() {
 
                 // 🚀 Navigate to the lobby with gameId and playerId
                 router.push({
-                    pathname: `/lobby/${gameId}`,
-                    params: { gameId: gameId, playerId: data.playerId },
+                    pathname: `/game/${gameId}`,
+                    params: { playerId: data.playerId },
                 });
             } else {
                 console.warn("API error:", data.message);
