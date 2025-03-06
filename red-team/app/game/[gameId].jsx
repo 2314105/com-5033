@@ -4,17 +4,15 @@ import { useLocalSearchParams } from 'expo-router';
 
     export default function GameScreen() {
         const { gameId } = useLocalSearchParams();
-
         const mapImage = "http://trinity-developments.co.uk/images/Horsforth_Game_Map.png";
+        
         return (
             <View style={styles.container}>
-                <Text style={styles.text}>Game ID: {gameId}</Text>
-                <Image
-                    source={{ uri: mapImage }}
+                <Image 
                     style={styles.mapImage}
-                    resizeMode='center'
+                    source={{ uri: mapImage}}
+                    resizeMode='contain'
                 />
-
                 {/* GAME LOGIC */}
             </View>
         );
@@ -33,6 +31,7 @@ import { useLocalSearchParams } from 'expo-router';
             marginBottom: 20
         },
         mapImage: {
-            width: 580,
+            width: '90%',
+            height: '90%'
         }
     });
