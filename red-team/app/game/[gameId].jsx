@@ -11,7 +11,7 @@ import { useLocalSearchParams } from 'expo-router';
                 <Image 
                     style={styles.mapImage}
                     source={{ uri: mapImage}}
-                    resizeMode='contain'
+                    resizeMode='center'
                 />
                 {/* GAME LOGIC */}
             </View>
@@ -31,7 +31,7 @@ import { useLocalSearchParams } from 'expo-router';
             marginBottom: 20
         },
         mapImage: {
-            width: '90%',
-            height: '90%'
+            width: 1783,
+            height: 1056,
         }
     });
