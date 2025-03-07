@@ -31,7 +31,7 @@ import { useLocalSearchParams } from 'expo-router';
             marginBottom: 20
         },
         mapImage: {
-            width: 1783,
-            height: 1056,
+            width: '100%',
+            height: '100%',
         }
     });
