@@ -9,7 +9,7 @@ import { useLocalSearchParams } from 'expo-router';
         return (
             <View style={styles.container}>
                 {/* Red Text at the Top */}
-                <Text style={styles.headerText}>Detective Screen</Text>
+                <Text style={styles.headerText}>X Screen</Text>
                 
                 <Image 
                     style={styles.mapImage}
