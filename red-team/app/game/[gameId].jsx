@@ -8,6 +8,9 @@ import { useLocalSearchParams } from 'expo-router';
         
         return (
             <View style={styles.container}>
+                {/* Red Text at the Top */}
+                <Text style={styles.headerText}>Detective Screen</Text>
+                
                 <Image 
                     style={styles.mapImage}
                     source={{ uri: mapImage}}
@@ -16,6 +19,7 @@ import { useLocalSearchParams } from 'expo-router';
                 {/* GAME LOGIC */}
             </View>
         );
+        
     }
 
     const styles = StyleSheet.create({
@@ -33,5 +37,12 @@ import { useLocalSearchParams } from 'expo-router';
         mapImage: {
             width: '100%',
             height: '100%',
-        }
+        },
+        headerText: {
+            fontSize: 24,       // You can adjust the size to fit your design
+            fontWeight: 'bold',
+            color: 'red',       // Red text
+            textAlign: 'center',
+            marginTop: 20,      // Add some space from the top of the screen
+        },
     });
