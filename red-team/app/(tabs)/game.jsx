@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, Modal, Image } from 'react-native';
+import { View, Text, TouchableOpacity, Image, StyleSheet, Animated, Modal } from 'react-native';
 import useForceLandscape from '@/hooks/useForceLandscape';
 import { useGame } from '@/hooks/useGame';
 
@@ -50,8 +50,12 @@ export default function GameScreen() {
                 <View style={styles.ticketsContainer}>
                     {Object.entries(tickets).map(([ticket, count]) => (
                         <TouchableOpacity key={ticket} style={styles.ticket} onPress={() => handleTicketPress(ticket)}>
-                            <Text style={styles.ticketText}>{ticket}: {count}</Text>
-                        </TouchableOpacity>
+                        <Image 
+                            source={require(`../../assets/images/Yellow Ticket.png`)}  // Ensure the path is correct
+                            style={styles.ticketImage} 
+                        />
+                        <Text style={styles.ticketText}>{ticket}: {count}</Text>
+                    </TouchableOpacity>
                     ))}
                 </View>
             </View>
