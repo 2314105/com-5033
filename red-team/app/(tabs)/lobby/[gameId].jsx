@@ -4,7 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 
 export default function LobbyScreen() {
     const router = useRouter();
-    const { gameId, playerId } = useLocalSearchParams(); // Get gameId from the URL
+    const { gameId, playerId } = useLocalSearchParams();
     const [game, setGame] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -31,6 +31,7 @@ export default function LobbyScreen() {
                         setIsHost(hostCheck);
                         isHostSet.current = true;
                     }
+
                 } else {
                     setError("Failed to load game details.");
                 }
@@ -44,13 +45,35 @@ export default function LobbyScreen() {
 
         fetchGameDetails();
 
+        // POLL for game state every 3 seconds
+        const pollGameState = setInterval(async () => {
+            try {
+                const res = await fetch(`http://trinity-developments.co.uk/games/${gameId}`);
+                const data = await res.json();
+
+                if (res.ok) {
+                    setGame(data);
+
+                    // Check if game has started
+                    if (data.state === 'fugitive' || data.state === 'detective') {
+                        clearInterval(pollGameState);
+                        Alert.alert("Game Started", "Redirecting to game...");
+                        router.push(`/game/${gameId}?playerId=${playerId}`);
+                    }
+                }
+            } catch (error) {
+                console.error('Polling error:', error);
+            }
+        }, 3000);
+
         return () => {
             isHostSet.current = false;
+            clearInterval(pollGameState);
         };
 
     }, [gameId, playerId]);
 
-    // Start Game (Only for Host)
+    // Start Game (Host Only)
     const handleStartGame = async () => {
         try {
             const response = await fetch(`http://trinity-developments.co.uk/games/${gameId}/start/${playerId}`, {
@@ -59,14 +82,15 @@ export default function LobbyScreen() {
             });
 
             if (!response.ok) {
-                throw new Error("Failed to start the game.");
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Failed to start the game.");
             }
 
             Alert.alert("Game Started!", "The game has begun.");
-            router.push(`/game/${gameId}`); // 🚀 Send players to the game screen
+            router.push(`/game/${gameId}?playerId=${playerId}`);
         } catch (error) {
             console.error('Error starting game: ', error);
-            Alert.alert('Error', 'Failed to start game. Please try again.');
+            Alert.alert('Error', error.message || 'Failed to start game. Please try again.');
         }
     };
 
@@ -76,13 +100,21 @@ export default function LobbyScreen() {
         router.push('/join-game');
     };
 
+    // UI Loading & Error Handling
     if (loading) {
         return <ActivityIndicator size="large" color="white" style={styles.loadingIndicator} />;
     }
 
     if (error) {
-        return <View style={styles.container}><Text style={styles.errorText}>{error}</Text></View>;
+        return (
+            <View style={styles.container}>
+                <Text style={styles.errorText}>{error}</Text>
+            </View>
+        );
     }
+
+    // SHOW lobby until game starts
+    const gameStarted = game.state === 'fugitive' || game.state === 'detective';
 
     return (
         <View style={styles.container}>
@@ -93,17 +125,27 @@ export default function LobbyScreen() {
 
             <Text style={styles.title}>{game.gameName}</Text>
             <Text style={styles.infoText}>Map: {game.mapName}</Text>
-            <Text style={styles.infoText}>Players: {game.players.length}</Text>
+            <Text style={styles.infoText}>Players in lobby: {game.players.length}</Text>
 
             {game.players.map((player) => (
                 <Text key={player.playerId} style={styles.infoText}>{player.playerName}</Text>
             ))}
 
-            {/* Show "Start Game" button only for the host */}
-            {isHost && (
+            {/* Show Start Button if host and game not started */}
+            {isHost && !gameStarted && (
                 <TouchableOpacity style={styles.startButton} onPress={handleStartGame}>
                     <Text style={styles.buttonText}>Start Game</Text>
                 </TouchableOpacity>
+            )}
+
+            {/* Show waiting message if not host */}
+            {!isHost && !gameStarted && (
+                <Text style={styles.waitingText}>Waiting for host to start the game...</Text>
+            )}
+
+            {/* Show transitioning message if game already started (shouldn't really see this!) */}
+            {gameStarted && (
+                <Text style={styles.waitingText}>Game has started. Loading game screen...</Text>
             )}
         </View>
     );
@@ -132,6 +174,11 @@ const styles = StyleSheet.create({
         fontSize: 18,
         color: 'white',
         marginBottom: 5,
+    },
+    waitingText: {
+        fontSize: 16,
+        color: 'white',
+        marginTop: 20,
     },
     backButton: {
         position: 'absolute',
