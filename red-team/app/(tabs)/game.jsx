@@ -15,6 +15,7 @@ export default function GameScreen() {
     const tickets = { T: 3, B: 2, U: 1, S: 1 };
     const horsforthMapURI = 'http://trinity-developments.co.uk/images/Horsforth_Game_Map.png';
 
+    const GameLogic {
     return (
         <View style={styles.container}>
             {/* Error Message Box */}
@@ -45,20 +46,22 @@ export default function GameScreen() {
                 </TouchableOpacity>
             </View>
 
-            {/* Player Ticket Selection */}
-            <View style={styles.infoCard}>
+            {/* Player Ticket Selection on the Left Side */}
+            <View style={styles.leftSideContainer}>
+                <Text style={styles.sideTitle}>Tickets</Text>
                 <View style={styles.ticketsContainer}>
                     {Object.entries(tickets).map(([ticket, count]) => (
                         <TouchableOpacity key={ticket} style={styles.ticket} onPress={() => handleTicketPress(ticket)}>
-                        <Image 
-                            source={require(`../../assets/images/Yellow Ticket.png`)}  // Ensure the path is correct
-                            style={styles.ticketImage} 
-                        />
-                        <Text style={styles.ticketText}>{ticket}: {count}</Text>
-                    </TouchableOpacity>
+                            <Image 
+                                source={require(`../../assets/images/Yellow Ticket.png`)}
+                                style={styles.ticketImage} 
+                            />
+                            <Text style={styles.ticketText}>{ticket}: {count}</Text>
+                        </TouchableOpacity>
                     ))}
                 </View>
             </View>
+
 
             {/* Settings Modal */}
             <Modal transparent={true} animationType="fade" visible={isSettingsOpen} onRequestClose={() => setIsSettingsOpen(false)}>
@@ -83,6 +86,7 @@ export default function GameScreen() {
         </View>
     );
 }
+
 
 const styles = StyleSheet.create({
     container: {
@@ -139,25 +143,50 @@ const styles = StyleSheet.create({
         left: '50%',
         transform: [{ translateX: -150 }],
         width: 350,
-        backgroundColor: 'rgba(0, 0, 0, 0.6)', // Opaque background
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
         padding: 15,
         borderRadius: 10,
         alignItems: 'center',
     },
+
+    leftSideContainer: {
+        position: 'absolute',
+        left: 10,
+        top: 100,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        padding: 10,
+        borderRadius: 10,
+        alignItems: 'center',
+        zIndex: 10,
+    },
+    
+    sideTitle: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 10,
+    },
     ticketsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'center',
+        flexDirection: 'column', 
+        alignItems: 'center',
     },
     ticket: {
         backgroundColor: '#666',
-        paddingVertical: 10,
-        paddingHorizontal: 20,
+        paddingVertical: 5,
+        paddingHorizontal: 10,
         borderRadius: 5,
-        marginHorizontal: 5,
+        marginVertical: 5,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    ticketImage: {
+        width: 24,
+        height: 24,
+        marginRight: 5,
     },
     ticketText: {
         color: 'white',
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: 'bold',
     },
     overlay: {

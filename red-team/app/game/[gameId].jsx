@@ -13,8 +13,10 @@ import { useLocalSearchParams } from 'expo-router';
                     source={{ uri: mapImage}}
                     resizeMode='center'
                 />
+                
                 {/* GAME LOGIC */}
             </View>
+
         );
     }
 
