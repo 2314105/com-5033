@@ -36,19 +36,6 @@ export default function HomePage() {
 
         {loading && <Text>Loading...</Text>}
 
-        {games.length > 0 && (
-            <ScrollView style={styles.gamesList}>
-              {games.map((game, index) => (
-                  <TouchableOpacity key={index} style={styles.gameItem} onPress={() => router.push(`/game/${game.gameId}`)}>
-                    <Text style={styles.gameItemText}>Game ID: {game.gameId}</Text>
-                    <Text style={styles.gameItemText}>Host: {game.gameName}</Text>
-                    <Text style={styles.gameItemText}>Players: {game.players.length}</Text>
-                    <Text style={styles.gameItemText}>Location: {game.mapName}</Text>
-                  </TouchableOpacity>
-              ))}
-            </ScrollView>
-        )}
-
         {navigationLoading && (
             <View style={styles.overlay}>
               <ActivityIndicator size="large" color="#fff" />
