@@ -51,7 +51,13 @@ export const useJoinGame = () => {
 
             if (response.ok) {
                 console.log('Joined game successfully:', data);
-                router.push({ pathname: `/game/${gameId}`, params: { playerId: data.playerId } });
+
+                // ✅ Send player to the LOBBY, not the game directly
+                router.push({
+                    pathname: `/lobby/${gameId}`,
+                    params: { playerId: data.playerId }
+                });
+
             } else {
                 console.warn("API error:", data.message);
                 alert(data.message || "Failed to join game.");
