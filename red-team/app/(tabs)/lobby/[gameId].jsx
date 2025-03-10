@@ -11,16 +11,13 @@ export default function LobbyScreen() {
     const [isHost, setIsHost] = useState(false);
     const isHostSet = useRef(false);
 
-    // Fetch game details when entering the lobby
     useEffect(() => {
         const fetchGameDetails = async () => {
             try {
-                console.log(`Fetching details for gameId: ${gameId}`);
                 const response = await fetch(`http://trinity-developments.co.uk/games/${gameId}`);
                 const data = await response.json();
 
                 if (response.ok) {
-                    console.log("Game data:", data);
                     setGame(data);
 
                     if (!isHostSet.current) {
@@ -31,21 +28,18 @@ export default function LobbyScreen() {
                         setIsHost(hostCheck);
                         isHostSet.current = true;
                     }
-
-                } else {
-                    setError("Failed to load game details.");
                 }
             } catch (err) {
                 console.error("Error fetching game details:", err);
-                setError("Error fetching game details.");
             } finally {
                 setLoading(false);
             }
         };
 
+        // Initial fetch
         fetchGameDetails();
 
-        // POLL for game state every 3 seconds
+        // Polling for game state changes every 3 seconds
         const pollGameState = setInterval(async () => {
             try {
                 const res = await fetch(`http://trinity-developments.co.uk/games/${gameId}`);
@@ -54,10 +48,13 @@ export default function LobbyScreen() {
                 if (res.ok) {
                     setGame(data);
 
-                    // Check if game has started
-                    if (data.state === 'fugitive' || data.state === 'detective') {
+                    console.log("Polling game state:", data.state);
+
+                    const normalizedState = data.state.toLowerCase();
+
+                    if (normalizedState === 'fugitive' || normalizedState === 'detective') {
+                        console.log("Game has started! Redirecting...");
                         clearInterval(pollGameState);
-                        Alert.alert("Game Started", "Redirecting to game...");
                         router.push(`/game/${gameId}?playerId=${playerId}`);
                     }
                 }
@@ -66,14 +63,13 @@ export default function LobbyScreen() {
             }
         }, 3000);
 
+        // Cleanup
         return () => {
             isHostSet.current = false;
             clearInterval(pollGameState);
         };
-
     }, [gameId, playerId]);
 
-    // Start Game (Host Only)
     const handleStartGame = async () => {
         try {
             const response = await fetch(`http://trinity-developments.co.uk/games/${gameId}/start/${playerId}`, {
@@ -94,13 +90,11 @@ export default function LobbyScreen() {
         }
     };
 
-    // Leave Game
     const handleLeaveGame = () => {
         Alert.alert("Leaving Game", "Returning to Join Game.");
         router.push('/join-game');
     };
 
-    // UI Loading & Error Handling
     if (loading) {
         return <ActivityIndicator size="large" color="white" style={styles.loadingIndicator} />;
     }
@@ -113,12 +107,10 @@ export default function LobbyScreen() {
         );
     }
 
-    // SHOW lobby until game starts
     const gameStarted = game.state === 'fugitive' || game.state === 'detective';
 
     return (
         <View style={styles.container}>
-            {/* Leave Lobby Button */}
             <TouchableOpacity style={styles.backButton} onPress={handleLeaveGame}>
                 <Text style={styles.buttonText}>← Leave Lobby</Text>
             </TouchableOpacity>
@@ -131,19 +123,16 @@ export default function LobbyScreen() {
                 <Text key={player.playerId} style={styles.infoText}>{player.playerName}</Text>
             ))}
 
-            {/* Show Start Button if host and game not started */}
             {isHost && !gameStarted && (
                 <TouchableOpacity style={styles.startButton} onPress={handleStartGame}>
                     <Text style={styles.buttonText}>Start Game</Text>
                 </TouchableOpacity>
             )}
 
-            {/* Show waiting message if not host */}
             {!isHost && !gameStarted && (
                 <Text style={styles.waitingText}>Waiting for host to start the game...</Text>
             )}
 
-            {/* Show transitioning message if game already started (shouldn't really see this!) */}
             {gameStarted && (
                 <Text style={styles.waitingText}>Game has started. Loading game screen...</Text>
             )}
