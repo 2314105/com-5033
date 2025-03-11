@@ -9,8 +9,9 @@ export default function GameScreen() {
     // Movement Log Entries
     const movementLog = Array.from({ length: 10 }, (_, i) => `Movement ${i + 1}`);
 
-    // State for "How to Play" Modal
+    // State for Modals
     const [howToPlayVisible, setHowToPlayVisible] = useState(false);
+    const [settingsVisible, setSettingsVisible] = useState(false);
 
     return (
         <View style={styles.container}>
@@ -37,7 +38,7 @@ export default function GameScreen() {
                 />
             </View>
 
-            {/* Right-side Container with X Movement Log */}
+            {/* Right-side Container with Movement Log */}
             <View style={styles.rightContainer}>
                 <Text style={styles.movementLogTitle}>X Movement Log</Text>
                 {movementLog.map((movement, index) => (
@@ -52,7 +53,7 @@ export default function GameScreen() {
                 <TouchableOpacity style={styles.bottomButton} onPress={() => setHowToPlayVisible(true)}>
                     <Text style={styles.bottomButtonText}>How to Play</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.bottomButton}>
+                <TouchableOpacity style={styles.bottomButton} onPress={() => setSettingsVisible(true)}>
                     <Text style={styles.bottomButtonText}>Settings</Text>
                 </TouchableOpacity>
             </View>
@@ -66,26 +67,61 @@ export default function GameScreen() {
             >
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContainer}>
+
                         <Text style={styles.modalTitle}>How to Play</Text>
+
                         <Text style={styles.modalSubTitle}>Gameplay:</Text>
+                        
                         <Text style={styles.modalText}>
                             - Players take turns moving across different locations on the map.
                             {'\n'}- Use different transport types (Taxi, Bus, Underground) to move.
                             {'\n'}- The detective team must locate and catch the hidden player.
                         </Text>
+
                         <Text style={styles.modalSubTitle}>Winning Conditions:</Text>
                         <Text style={styles.modalText}>
                             - The detectives win if they land on the same space as the hidden player.
                             {'\n'}- The hidden player wins if they evade capture for a set number of turns.
                         </Text>
+
                         <Text style={styles.modalSubTitle}>Tips:</Text>
                         <Text style={styles.modalText}>
                             - Plan your routes strategically to cut off the hidden player's escape.
                             {'\n'}- Keep track of past movements to predict the next move.
                         </Text>
+
                         <TouchableOpacity style={styles.closeButton} onPress={() => setHowToPlayVisible(false)}>
                             <Text style={styles.closeButtonText}>Close</Text>
                         </TouchableOpacity>
+
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Modal for "Settings" */}
+            <Modal
+                animationType="fade"
+                transparent={true}
+                visible={settingsVisible}
+                onRequestClose={() => setSettingsVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContainer}>
+
+                        <Text style={styles.modalTitle}>Settings</Text>
+
+                        <TouchableOpacity style={styles.button} onPress={() => {}}>
+                            <Text style={styles.buttonText}>Sound: ON/OFF</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.button} onPress={() => {}}>
+                            <Text style={styles.buttonText}>Vibration: ON/OFF</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.closeButton} onPress={() => setSettingsVisible(false)}>
+                            <Text style={styles.closeButtonText}>Close</Text>
+                        </TouchableOpacity>
+
                     </View>
                 </View>
             </Modal>
