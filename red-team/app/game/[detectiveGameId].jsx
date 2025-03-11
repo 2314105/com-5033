@@ -38,8 +38,9 @@ export default function GameScreen() {
             <Image
                 style={styles.mapImage}
                 source={{ uri: mapImage }}
-                resizeMode='center'
-            />
+                resizeMode='contain'
+            />   
+
             
             {/* Right-side Container with X Movement Log */}
             <View style={styles.rightContainer}>
@@ -64,7 +65,7 @@ const styles = StyleSheet.create({
         marginBottom: 20
     },
     mapImage: {
-        width: '60%', // Adjust width to leave space for the left container
+        width: '75%', // Adjust width to leave space for the left container
         height: '100%',
     },
     headerText: {
