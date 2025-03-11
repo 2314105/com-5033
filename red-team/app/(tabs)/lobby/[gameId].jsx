@@ -55,7 +55,7 @@ export default function LobbyScreen() {
                     if (normalizedState === 'fugitive' || normalizedState === 'detective') {
                         console.log("Game has started! Redirecting...");
                         clearInterval(pollGameState);
-                        router.push(`/game/${gameId}?playerId=${playerId}`);
+                        await navigateToGameScreen();
                     }
                 }
             } catch (error) {
@@ -70,6 +70,26 @@ export default function LobbyScreen() {
         };
     }, [gameId, playerId]);
 
+    const navigateToGameScreen = async () => {
+        try {
+            const playerResponse = await fetch(`http://trinity-developments.co.uk/players/${playerId}`);
+            const playerData = await playerResponse.json();
+
+            if (playerResponse.ok) {
+                if (playerData.role.toLowerCase() === 'fugitive') {
+                    router.push(`/fugitive/fugitive${gameId}?playerId=${playerId}`); // Fugitive screen
+                } else if (playerData.role.toLowerCase() === 'detective') {
+                    router.push(`/detective/detective${gameId}?playerId=${playerId}`); // Detective screen
+                }
+            } else {
+                Alert.alert('Error', 'Failed to fetch player role.');
+            }
+        } catch (error) {
+            console.error('Error fetching player role:', error);
+            Alert.alert('Error', 'Failed to fetch player role. Please try again.');
+        }
+    }
+
     const handleStartGame = async () => {
         try {
             const response = await fetch(`http://trinity-developments.co.uk/games/${gameId}/start/${playerId}`, {
@@ -83,7 +103,7 @@ export default function LobbyScreen() {
             }
 
             Alert.alert("Game Started!", "The game has begun.");
-            router.push(`/game/${gameId}?playerId=${playerId}`);
+
         } catch (error) {
             console.error('Error starting game: ', error);
             Alert.alert('Error', error.message || 'Failed to start game. Please try again.');
