@@ -1,20 +1,22 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
-import { useLocalSearchParams } from 'expo-router'; 
+import { useLocalSearchParams } from 'expo-router';
 
 export default function GameScreen() {
     const { gameId } = useLocalSearchParams();
     const mapImage = "http://trinity-developments.co.uk/images/Horsforth_Game_Map.png";
 
+    // Movement Log Entries
+    const movementLog = Array.from({ length: 10 }, (_, i) => `Movement ${i + 1}`);
+
     return (
         <View style={styles.container}>
             {/* Sticky Header */}
             <Text style={styles.headerText}>Detective Screen</Text>
-            
+
             {/* Left-side White Container with Scrollable Buttons */}
             <View style={styles.leftContainer}>
                 <ScrollView contentContainerStyle={styles.buttonList}>
-                    {/* Example buttons */}
                     <TouchableOpacity style={styles.button}>
                         <Text style={styles.buttonText}>Button 1</Text>
                     </TouchableOpacity>
@@ -30,25 +32,52 @@ export default function GameScreen() {
                     <TouchableOpacity style={styles.button}>
                         <Text style={styles.buttonText}>Button 5</Text>
                     </TouchableOpacity>
-                    {/* Add more buttons as needed */}
+                    <TouchableOpacity style={styles.button}>
+                        <Text style={styles.buttonText}>Button 6</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.button}>
+                        <Text style={styles.buttonText}>Button 7</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.button}>
+                        <Text style={styles.buttonText}>Button 8</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.button}>
+                        <Text style={styles.buttonText}>Button 9</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.button}>
+                        <Text style={styles.buttonText}>Button 10</Text>
+                    </TouchableOpacity>
                 </ScrollView>
             </View>
 
-            {/* Full-Screen Map */}
-            <Image
-                style={styles.mapImage}
-                source={{ uri: mapImage }}
-                resizeMode='contain'
-            />   
+            {/* Centered Full Map */}
+            <View style={styles.mapContainer}>
+                <Image
+                    style={styles.mapImage}
+                    source={{ uri: mapImage }}
+                    resizeMode="contain"
+                />
+            </View>
 
-            
             {/* Right-side Container with X Movement Log */}
             <View style={styles.rightContainer}>
-                <Text style={styles.movementLogText}>X Movement Log</Text>
-                {/* You can add movement log details here */}
+                <Text style={styles.movementLogTitle}>X Movement Log</Text>
+                {movementLog.map((movement, index) => (
+                    <Text key={index} style={styles.movementLogText}>
+                        {movement}
+                    </Text>
+                ))}
             </View>
-            
-            {/* GAME LOGIC */}
+
+            {/* Bottom Centered Buttons */}
+            <View style={styles.bottomContainer}>
+                <TouchableOpacity style={styles.bottomButton}>
+                    <Text style={styles.bottomButtonText}>How to Play</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.bottomButton}>
+                    <Text style={styles.bottomButtonText}>Settings</Text>
+                </TouchableOpacity>
+            </View>
         </View>
     );
 }
@@ -57,19 +86,10 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#000',
-        flexDirection: 'row', // Place the left, right containers and map side by side
-    },
-    text: {
-        color: '#fff',
-        fontSize: 20,
-        marginBottom: 20
-    },
-    mapImage: {
-        width: '75%', // Adjust width to leave space for the left container
-        height: '100%',
+        flexDirection: 'row',
     },
     headerText: {
-        position: 'absolute', // Make the header fixed at the top
+        position: 'absolute',
         top: 0,
         left: 0,
         right: 0,
@@ -77,14 +97,13 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: 'red',
         textAlign: 'center',
-        paddingTop: 20, // Adjust top padding to make space from the top of the screen
-        zIndex: 10, // Ensure it stays on top of other content
+        paddingTop: 20,
+        zIndex: 10,
     },
     leftContainer: {
-        backgroundColor: 'white',
-        width: '12%', // Adjust width as needed for your design
+        backgroundColor: '#5e5757',
+        width: '15%',
         padding: 10,
-        justifyContent: 'flex-start',
         height: '100%',
     },
     buttonList: {
@@ -104,20 +123,52 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     rightContainer: {
-        position: 'absolute',  // Make the container fixed
-        top: 0,                // Stick to the top
-        right: 0,              // Stick to the right side
-        backgroundColor: 'white',
-        width: '12%',          // Adjust the width as needed
+        backgroundColor: '#5e5757',
+        width: '15%',
         padding: 10,
-        justifyContent: 'flex-start',
-        height: '100%',        // Take the full height of the screen
+        height: '100%',
+        alignItems: 'center',
+        justifyContent: 'flex-start', // Stack items from top to bottom
     },
-    movementLogText: {
+    movementLogTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: 'black',
+        color: 'white',
         marginBottom: 10,
         textAlign: 'center',
+    },
+    movementLogText: {
+        fontSize: 16,
+        color: 'white',
+        marginVertical: 3,
+    },
+    mapContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    mapImage: {
+        width: '100%',
+        height: '100%',
+    },
+    bottomContainer: {
+        position: 'absolute',
+        bottom: 20,
+        left: 0,
+        right: 0,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: 20,
+    },
+    bottomButton: {
+        backgroundColor: '#007BFF',
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 10,
+    },
+    bottomButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: 'bold',
     },
 });
