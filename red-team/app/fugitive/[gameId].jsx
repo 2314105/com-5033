@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Modal, TextInput, Alert } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useRouter } from 'expo-router';
 
 export default function GameScreen() {
     const { gameId, playerId } = useLocalSearchParams();
@@ -9,6 +10,7 @@ export default function GameScreen() {
     const gameStatus = "http://trinity-developments.co.uk/games/{gameId}"; // Can GET game status 
     const playerStatus = "http://trinity-developments.co.uk/players/{playerId}"; // Can GET current player status AND DELETE player from game
     const playerMoves = "http://trinity-developments.co.uk/players/{playerId}/moves"; // Can GET player move history AND POST player move
+    const router = useRouter();
 
     // Move Log
     const [moveLog, setMoveLog] = useState([]);
@@ -22,12 +24,56 @@ export default function GameScreen() {
     const [startLocation, setStartLocation] = useState(null);
     const [nextLocation, setNextLocation] = useState('');
     const [transportMode, setTransportMode] = useState('');
+    const [isAlertShown, setIsAlertShown] = useState(false);
+    const intervalRef = useRef(null);
+
+
+    const pollGameState = async () => {
+        try {
+            const response = await fetch(`http://trinity-developments.co.uk/games/${gameId}`);
+            if (response.ok) {
+                const data = await response.json();
+                setGameData(data);
+
+                if (data.state === "Over") {
+                    if (!isAlertShown) {
+                        setIsAlertShown(true);
+                        let alertMessage = "";
+                        if (data.winner === "Detective") {
+                            alertMessage = "The fugitive has been caught!";
+                        } else if (data.winner === "Fugitive") {
+                            alertMessage = "The fugitive has escaped!";
+                        } else{
+                            alertMessage = "The game has ended!";
+                        }
+    
+                        Alert.alert("GAME OVER!", alertMessage, [
+                            {
+                                text: "OK",
+                                onPress: () => {
+                                    if (intervalRef.current) {
+                                        clearInterval(intervalRef.current);
+                                    }
+                                    router.push('/')
+                                },
+                            },
+                        ]);
+                    }
+                    return;
+                }
+            } else {
+                console.error("Failed to poll game state: ", response.status);
+            }
+        } catch (error) {
+            console.error("Error pollin game state: ", error);
+        }
+    };
 
     useEffect(() => {
         const fetchGameAndPlayerData = async () => {
             try {
-                console.log("Fetching game with gameId:", gameId, ". playerId:", playerId);
-                
+                console.log("Fetching game with gameId: ", gameId);
+
                 // GAME DATA
                 const gameResponse = await fetch(`http://trinity-developments.co.uk/games/${gameId}`);
                 if (gameResponse.ok) {
@@ -45,7 +91,7 @@ export default function GameScreen() {
                     setPlayerData(playerData);
                     console.log("Player Data: ", playerData);
                 } else {
-                    console.error("Failed to fetch game data: ", playerResponse.status);
+                    console.error("Failed to fetch player data: ", playerResponse.status);
                 }
 
                 // MOVES DATA
@@ -54,21 +100,50 @@ export default function GameScreen() {
                     const movesData = await movesResponse.json();
                     setMovesData(movesData);
                     setStartLocation(movesData.startLocation);
-                    console.log("Fugitive start location: ", movesData.startLocation)
+                    console.log("Fugitive start location: ", movesData.startLocation);
                 } else {
-                    console.error("Failed to fetch moves data: ", movesResponse.status);
+                    console.log("Failed to fetch moves data: ", movesResponse.status)
                 }
             } catch (error) {
-                console.error("Error fetching data: ", error);
+                console.log("Error fetching data: ", error)
             }
         };
 
         fetchGameAndPlayerData();
+        pollGameState();
+
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+        }
+
+        intervalRef.current = setInterval(pollGameState, 3000);
+
+        return () => {
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+            }
+        }
     }, [gameId, playerId]);
 
 
+    const isGameOver = (gameData, fugitiveLocation) => {
+        if (!gameData || !gameData.players) return false;
+
+        for (const player of gameData.players) {
+            if (player.role === 'Detective' && player.location === fugitiveLocation) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     const handlePlayerMove = async () => {
+        if (gameData && gameData.state !== "Fugitive") {
+            Alert.alert("Not your turn", "Please wait your turn.");
+            return;
+        }
+
         try {
             const response = await fetch(`http://trinity-developments.co.uk/players/${playerId}/moves`, {
                 method: 'POST',
@@ -77,7 +152,7 @@ export default function GameScreen() {
                 },
                 body: JSON.stringify({
                     gameID: parseInt(gameId),
-                    ticket: transportMode.toLowerCase(),
+                    ticket: transportMode,
                     destination: parseInt(nextLocation),
                 }),
             });
@@ -86,6 +161,7 @@ export default function GameScreen() {
                 const responseData = await response.json();
                 console.log("Move Successful: ", responseData);
                 setStartLocation(nextLocation);
+                fugitiveLocation = nextLocation;
 
                 const gameResponse = await fetch(`http://trinity-developments.co.uk/games/${gameId}`);
                 if (gameResponse.ok) {
@@ -97,6 +173,11 @@ export default function GameScreen() {
                         return `${player.playerName} moved to ${player.location}`;
                     });
                     setMoveLog(newLogEntries);
+
+                    if (isGameOver(gameData, nextLocation)) {
+                        Alert.alert("GAME OVER!", "The fugitive has been caught");
+                    }
+
                 } else {
                     console.log("OOPSIE!")
                 }
@@ -107,15 +188,13 @@ export default function GameScreen() {
             }
         } catch (error) {
             console.error("Error submitting move:", error);
-            Alert.alert("Error", "An expected error occurred");
+            Alert.alert("Error", "Wrong transport mode used");
         }
-
+    
         setNextLocation('');
         setTransportMode('');
-
-    }
-
-
+        pollGameState();
+    };
 
 
     return (
@@ -150,7 +229,7 @@ export default function GameScreen() {
                         />
                     </View>
 
-                    <TouchableOpacity style={styles.submitButton} onPress={handlePlayerMove}>
+                    <TouchableOpacity style={styles.submitButton} onPress={handlePlayerMove} disabled={gameData && gameData.state !== "Fugitive"}>
                         <Text style={styles.submitButtonText}>Move</Text>
                     </TouchableOpacity>
                 </ScrollView>

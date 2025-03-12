@@ -1,36 +1,224 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Modal } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Modal, TextInput, Alert } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useRouter } from 'expo-router';
 
 export default function GameScreen() {
-    const { gameId } = useLocalSearchParams();
+    const { gameId, playerId } = useLocalSearchParams();
     const mapImage = "http://trinity-developments.co.uk/images/Horsforth_Game_Map.png";
     const gameStatus = "http://trinity-developments.co.uk/games/{gameId}"; // Can GET game status 
     const playerStatus = "http://trinity-developments.co.uk/players/{playerId}"; // Can GET current player status AND DELETE player from game
     const playerMoves = "http://trinity-developments.co.uk/players/{playerId}/moves"; // Can GET player move history AND POST player move
+    const router = useRouter();
 
-    // Movement Log Entries
-    const movementLog = Array.from({ length: 10 }, (_, i) => `Movement ${i + 1}`);
+    // Move Log
+    const [moveLog, setMoveLog] = useState([]);
 
-    // State for Modals
+    // States
     const [howToPlayVisible, setHowToPlayVisible] = useState(false);
     const [settingsVisible, setSettingsVisible] = useState(false);
+    const [gameData, setGameData] = useState(null);
+    const [playerData, setPlayerData] = useState(null);
+    const [movesData, setMovesData] = useState(null);
+    const [startLocation, setStartLocation] = useState(null);
+    const [nextLocation, setNextLocation] = useState('');
+    const [transportMode, setTransportMode] = useState('');
+    const [isAlertShown, setIsAlertShown] = useState(false);
+
+    let intervalId;
+
+    const pollGameState = async () => {
+        try {
+            const response = await fetch(`http://trinity-developments.co.uk/games/${gameId}`);
+            if (response.ok) {
+                const data = await response.json();
+                setGameData(data);
+
+                if (data.state === "Over" && !isAlertShown) {
+                    console.log("Game Over Alert Triggered");
+                    setIsAlertShown(true);
+
+                    let alertMessage = "";
+                    if (data.winner === "Detective") {
+                        alertMessage = "The fugitive has been caught!";
+                    } else if (data.winner === "Fugitive") {
+                        alertMessage = "The fugitive has escaped!";
+                    } else{
+                        alertMessage = "The game has ended!";
+                    }
+
+                    Alert.alert("GAME OVER!", alertMessage, [
+                        {
+                            text: "OK",
+                            onPress: () => {
+                                clearInterval(intervalId);
+                                router.push('/')
+                            },
+                        },
+                    ]);
+                }
+            } else {
+                console.error("Failed to poll game state: ", response.status);
+            }
+        } catch (error) {
+            console.error("Error pollin game state: ", error);
+        }
+    };
+
+
+    useEffect(() => {
+        const fetchGameAndPlayerData = async () => {
+            try {
+                console.log("Fetching game with gameId: ", gameId);
+
+                // GAME DATA
+                const gameResponse = await fetch(`http://trinity-developments.co.uk/games/${gameId}`);
+                if (gameResponse.ok) {
+                    const gameData = await gameResponse.json();
+                    setGameData(gameData);
+                    console.log("Game Data: ", gameData);
+                } else {
+                    console.error("Failed to fetch game data: ", gameResponse.status);
+                }
+
+                // PLAYER DATA
+                const playerResponse = await fetch(`http://trinity-developments.co.uk/players/${playerId}`);
+                if (playerResponse.ok) {
+                    const playerData = await playerResponse.json();
+                    setPlayerData(playerData);
+                    console.log("Player Data: ", playerData);
+                } else {
+                    console.error("Failed to fetch player data: ", playerResponse.status);
+                }
+
+                // MOVES DATA
+                const movesResponse = await fetch(`http://trinity-developments.co.uk/players/${playerId}/moves`);
+                if (movesResponse.ok) {
+                    const movesData = await movesResponse.json();
+                    setMovesData(movesData);
+                    setStartLocation(movesData.startLocation);
+                    console.log("Fugitive start location: ", movesData.startLocation);
+                } else {
+                    console.log("Failed to fetch moves data: ", movesResponse.status)
+                }
+            } catch (error) {
+                console.log("Error fetching data: ", error)
+            }
+        };
+
+        fetchGameAndPlayerData();
+        pollGameState();
+        intervalId = setInterval(pollGameState, 3000);
+        return () => {
+            clearInterval(intervalId)
+        };
+    }, [gameId, playerId]);
+
+
+    const isGameOver = (gameData, fugitiveLocation) => {
+        if (!gameData || !gameData.players) return false;
+
+        for (const player of gameData.players) {
+            if (player.role === 'Fugitive' && player.location === fugitiveLocation) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    const handlePlayerMove = async () => {
+        if (gameData && gameData.state !== "Detective") {
+            Alert.alert("Not your turn", "Please wait for your turn")
+        }
+
+        try {
+            const response = await fetch(`http://trinity-developments.co.uk/players/${playerId}/moves`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    gameID: parseInt(gameId),
+                    ticket: transportMode,
+                    destination: parseInt(nextLocation),
+                }),
+            });
+
+            if (response.ok) {
+                const responseData = await response.json();
+                console.log("Move Successful: ", responseData);
+                setStartLocation(nextLocation);
+
+                const gameResponse = await fetch(`http://trinity-developments.co.uk/games/${gameId}`);
+                if (gameResponse.ok) {
+                    const gameData = await gameResponse.json();
+                    setGameData(gameData);
+                    console.log("Updated Game Data: ", gameData);
+
+                    const newLogEntries = gameData.players.map(player => {
+                        return `${player.playerName} moved to ${player.location}`;
+                    });
+                    setMoveLog(newLogEntries);
+
+                    if (isGameOver(gameData, nextLocation)) {
+                        Alert.alert("GAME OVER!", "The fugitive has been caught");
+                    }
+                } else {
+                    console.log("OOPSIE!")
+                }
+            } else {
+                const errorData = await response.json();
+                console.error("Move Failed:", response.status, errorData);
+                Alert.alert("Move Failed", errorData.message || "Failed to submit move.");
+            }
+        } catch (error) {
+            console.error("Error submitting move:", error);
+            Alert.alert("Error", "Wrong transport mode used");
+        }
+    
+            setNextLocation('');
+            setTransportMode('');
+            pollGameState();
+    };
+
 
     return (
         <View style={styles.container}>
-            {/* Sticky Header */}
-            <Text style={styles.headerText}>Detective Screen</Text>
-
             {/* Left-side White Container with Scrollable Buttons */}
-
-            {/* <Text>Your Current Location: {playerData ? playerData.location : 'Loading...'}</Text> */}
             <View style={styles.leftContainer}>
+                <View>
+                    <Text style={styles.currentLocationText}>Your Current Location: {startLocation !== null ? startLocation : 'Loading...'}</Text>
+                </View>
                 <ScrollView contentContainerStyle={styles.buttonList}>
-                    {Array.from({ length: 10 }, (_, i) => (
-                        <TouchableOpacity key={i} style={styles.button}>
-                            <Text style={styles.buttonText}>Button {i + 1}</Text>
-                        </TouchableOpacity>
-                    ))}
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.inputText}>Enter your next location:</Text>
+
+                        <TextInput
+                            style={styles.input}
+                            value={nextLocation}
+                            onChangeText={setNextLocation}
+                            placeholder='Eg: 2'
+                            placeholderTextColor="gray"
+                        />
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.inputText}>Enter mode of transportation:</Text>
+
+                        <TextInput
+                            style={styles.input}
+                            value={transportMode}
+                            onChangeText={setTransportMode}
+                            placeholder='Eg: yellow, green, red, black'
+                            placeholderTextColor="gray"
+                        />
+                    </View>
+
+                    <TouchableOpacity style={styles.submitButton} onPress={handlePlayerMove} disabled={gameData && gameData.state !== "Detective"}>
+                        <Text style={styles.submitButtonText}>Move</Text>
+                    </TouchableOpacity>
                 </ScrollView>
             </View>
 
@@ -45,94 +233,102 @@ export default function GameScreen() {
 
             {/* Right-side Container with Movement Log */}
             <View style={styles.rightContainer}>
-                <Text style={styles.movementLogTitle}>X Movement Log</Text>
-                {movementLog.map((movement, index) => (
-                    <Text key={index} style={styles.movementLogText}>
-                        {movement}
-                    </Text>
-                ))}
-            </View>
+                <Text style={styles.movementLogTitle}>Move Log</Text>
 
-            {/* Bottom Centered Buttons */}
-            <View style={styles.bottomContainer}>
-                <TouchableOpacity style={styles.bottomButton} onPress={() => setHowToPlayVisible(true)}>
-                    <Text style={styles.bottomButtonText}>How to Play</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.bottomButton} onPress={() => setSettingsVisible(true)}>
-                    <Text style={styles.bottomButtonText}>Settings</Text>
-                </TouchableOpacity>
-            </View>
+                <ScrollView>
+                    {moveLog.map((movement, index) => {
+                        return (
+                            <Text key={index} style={styles.moveLogText}>
+                                {movement}
+                            </Text>
+                        );
+                    })}
+                </ScrollView>
 
-            {/* Modal for "How to Play" */}
-            <Modal
-                animationType="fade"
-                transparent={true}
-                visible={howToPlayVisible}
-                onRequestClose={() => setHowToPlayVisible(false)}
-            >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContainer}>
+                {/* Modal for "How to Play" */}
+                <Modal
+                    animationType="fade"
+                    transparent={true}
+                    visible={howToPlayVisible}
+                    onRequestClose={() => setHowToPlayVisible(false)}
+                >
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.modalContainer}>
 
-                        <Text style={styles.modalTitle}>How to Play</Text>
+                            <Text style={styles.modalTitle}>How to Play</Text>
 
-                        <Text style={styles.modalSubTitle}>Gameplay:</Text>
-                        
-                        <Text style={styles.modalText}>
-                            - Players take turns moving across different locations on the map.
-                            {'\n'}- Use different transport types (Taxi, Bus, Underground) to move.
-                            {'\n'}- The detective team must locate and catch the hidden player.
-                        </Text>
+                            <Text style={styles.modalSubTitle}>Gameplay:</Text>
+                            
+                            <Text style={styles.modalText}>
+                                - Players take turns moving across different locations on the map.
+                                {'\n'}- Use different transport types (Taxi, Bus, Underground) to move.
+                                {'\n'}- The detective team must locate and catch the hidden player.
+                            </Text>
 
-                        <Text style={styles.modalSubTitle}>Winning Conditions:</Text>
-                        <Text style={styles.modalText}>
-                            - The detectives win if they land on the same space as the hidden player.
-                            {'\n'}- The hidden player wins if they evade capture for a set number of turns.
-                        </Text>
+                            <Text style={styles.modalSubTitle}>Winning Conditions:</Text>
+                            <Text style={styles.modalText}>
+                                - The detectives win if they land on the same space as the hidden player.
+                                {'\n'}- The hidden player wins if they evade capture for a set number of turns.
+                            </Text>
 
-                        <Text style={styles.modalSubTitle}>Tips:</Text>
-                        <Text style={styles.modalText}>
-                            - Plan your routes strategically to cut off the hidden player's escape.
-                            {'\n'}- Keep track of past movements to predict the next move.
-                        </Text>
+                            <Text style={styles.modalSubTitle}>Tips:</Text>
+                            <Text style={styles.modalText}>
+                                - Plan your routes strategically to cut off the hidden player's escape.
+                                {'\n'}- Keep track of past movements to predict the next move.
+                            </Text>
 
-                        <TouchableOpacity style={styles.closeButton} onPress={() => setHowToPlayVisible(false)}>
-                            <Text style={styles.closeButtonText}>Close</Text>
-                        </TouchableOpacity>
+                            <TouchableOpacity style={styles.closeButton} onPress={() => setHowToPlayVisible(false)}>
+                                <Text style={styles.closeButtonText}>Close</Text>
+                            </TouchableOpacity>
 
+                        </View>
                     </View>
-                </View>
-            </Modal>
+                </Modal>
 
-            {/* Modal for "Settings" */}
-            <Modal
-                animationType="fade"
-                transparent={true}
-                visible={settingsVisible}
-                onRequestClose={() => setSettingsVisible(false)}
-            >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContainer}>
+                {/* Modal for "Settings" */}
+                <Modal
+                    animationType="fade"
+                    transparent={true}
+                    visible={settingsVisible}
+                    onRequestClose={() => setSettingsVisible(false)}
+                >
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.modalContainer}>
 
-                        <Text style={styles.modalTitle}>Settings</Text>
+                            <Text style={styles.modalTitle}>Settings</Text>
 
-                        <TouchableOpacity style={styles.button} onPress={() => {}}>
-                            <Text style={styles.buttonText}>Sound: ON/OFF</Text>
-                        </TouchableOpacity>
+                            <TouchableOpacity style={styles.button} onPress={() => {}}>
+                                <Text style={styles.buttonText}>Sound: ON/OFF</Text>
+                            </TouchableOpacity>
 
-                        <TouchableOpacity style={styles.button} onPress={() => {}}>
-                            <Text style={styles.buttonText}>Vibration: ON/OFF</Text>
-                        </TouchableOpacity>
+                            <TouchableOpacity style={styles.button} onPress={() => {}}>
+                                <Text style={styles.buttonText}>Vibration: ON/OFF</Text>
+                            </TouchableOpacity>
 
-                        <TouchableOpacity style={styles.closeButton} onPress={() => setSettingsVisible(false)}>
-                            <Text style={styles.closeButtonText}>Close</Text>
-                        </TouchableOpacity>
+                            <TouchableOpacity style={styles.closeButton} onPress={() => setSettingsVisible(false)}>
+                                <Text style={styles.closeButtonText}>Close</Text>
+                            </TouchableOpacity>
 
+                        </View>
                     </View>
+                </Modal>
+
+
+                {/* Bottom Centered Buttons */}
+                <View style={styles.bottomContainer}>
+                    <TouchableOpacity style={styles.bottomButton} onPress={() => setHowToPlayVisible(true)}>
+                        <Text style={styles.bottomButtonText}>?</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.bottomButton} onPress={() => setSettingsVisible(true)}>
+                        <Ionicons name="settings-outline" size={24} color="white" />
+                    </TouchableOpacity>
                 </View>
-            </Modal>
+            </View>            
+
         </View>
-    );
+    );      
 }
+
 
 const styles = StyleSheet.create({
     container: {
@@ -189,7 +385,7 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         textAlign: 'center',
     },
-    movementLogText: {
+    moveLogText: {
         fontSize: 16,
         color: 'white',
         marginVertical: 3,
@@ -204,31 +400,34 @@ const styles = StyleSheet.create({
         height: '100%',
     },
     bottomContainer: {
-        position: 'absolute',
-        bottom: 20,
-        left: 0,
-        right: 0,
         flexDirection: 'row',
         justifyContent: 'center',
         gap: 20,
+        paddingTop: 20,
     },
     bottomButton: {
         backgroundColor: '#007BFF',
         paddingVertical: 12,
         paddingHorizontal: 20,
         borderRadius: 10,
+        marginBottom: 10,
     },
     bottomButtonText: {
         color: 'white',
         fontSize: 16,
         fontWeight: 'bold',
+        textAlign:'center',
+        justifyContent:'center'
     },
-    // Modal Styles
     modalOverlay: {
-        flex: 1,
+        justifyContent: 'center',
         backgroundColor: 'rgba(0, 0, 0, 0.7)',
         justifyContent: 'center',
         alignItems: 'center',
+        width: '100%',
+        height: '80%',
+        marginTop: 20,
+        marginBottom: 20
     },
     modalContainer: {
         width: '80%',
@@ -263,4 +462,34 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
     },
+    currentLocationText: {
+        color: 'white',
+        fontSize: 15,
+        fontWeight: 'bold'
+    },
+    inputContainer: {
+        marginBottom: 10,
+    },
+    input: {
+        borderWidth: 1,
+        borderColor: 'grey',
+        padding: 8,
+        marginTop: 5,
+        backgroundColor: 'white'
+    },
+    submitButton: {
+        backgroundColor: '#007BFF',
+        padding: 12,
+        borderRadius: 10,
+        marginTop: 10
+    },
+    submitButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: 'bold',
+        textAlign: 'center'
+    },
+    inputText: {
+        color: 'white',
+    }
 });
