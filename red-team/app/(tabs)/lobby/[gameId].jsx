@@ -77,9 +77,9 @@ export default function LobbyScreen() {
 
             if (playerResponse.ok) {
                 if (playerData.role.toLowerCase() === 'fugitive') {
-                    router.push(`/fugitive/fugitive${gameId}?playerId=${playerId}`); // Fugitive screen
+                    router.push(`/fugitive/${gameId}?playerId=${playerId}`);
                 } else if (playerData.role.toLowerCase() === 'detective') {
-                    router.push(`/detective/detective${gameId}?playerId=${playerId}`); // Detective screen
+                    router.push(`/detective/${gameId}?playerId=${playerId}`); // Detective screen
                 }
             } else {
                 Alert.alert('Error', 'Failed to fetch player role.');

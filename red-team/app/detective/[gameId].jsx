@@ -5,6 +5,9 @@ import { useLocalSearchParams } from 'expo-router';
 export default function GameScreen() {
     const { gameId } = useLocalSearchParams();
     const mapImage = "http://trinity-developments.co.uk/images/Horsforth_Game_Map.png";
+    const gameStatus = "http://trinity-developments.co.uk/games/{gameId}"; // Can GET game status 
+    const playerStatus = "http://trinity-developments.co.uk/players/{playerId}"; // Can GET current player status AND DELETE player from game
+    const playerMoves = "http://trinity-developments.co.uk/players/{playerId}/moves"; // Can GET player move history AND POST player move
 
     // Movement Log Entries
     const movementLog = Array.from({ length: 10 }, (_, i) => `Movement ${i + 1}`);
@@ -19,6 +22,8 @@ export default function GameScreen() {
             <Text style={styles.headerText}>Detective Screen</Text>
 
             {/* Left-side White Container with Scrollable Buttons */}
+
+            {/* <Text>Your Current Location: {playerData ? playerData.location : 'Loading...'}</Text> */}
             <View style={styles.leftContainer}>
                 <ScrollView contentContainerStyle={styles.buttonList}>
                     {Array.from({ length: 10 }, (_, i) => (
