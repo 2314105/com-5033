@@ -1,27 +1,59 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator } from 'react-native';
+import {
+    View,
+    Text,
+    TouchableOpacity,
+    TextInput,
+    StyleSheet,
+    ActivityIndicator,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import useForceLandscape from '@/hooks/useForceLandscape';
-import { useCreateGame } from '@/hooks/useCreateGame'; // Import custom hook
+import { useCreateGame } from '@/hooks/useCreateGame'; // Custom hook for game creation logic
 
 export default function CreateGame() {
-    useForceLandscape();
+    useForceLandscape(); // Lock screen orientation to landscape
     const router = useRouter();
+
+    // Destructure loading state and create function from the hook
     const { createAndJoinGame, loading } = useCreateGame();
 
     // State variables for form inputs
     const [playerName, setPlayerName] = useState('');
     const [gameName, setGameName] = useState('');
-    const [gameLength, setGameLength] = useState('Short');
-    const [mapId, setMapId] = useState(801);
+    const [gameLength, setGameLength] = useState('Short'); // "Short" by default
+    const [mapId, setMapId] = useState(801); // Static for now, could be dynamic later
+
+    /**
+     * Handles form submission.
+     * Optionally validate inputs before calling the API.
+     */
+    const handleCreateGame = () => {
+        // Basic validation (optional but recommended)
+        if (!playerName.trim() || !gameName.trim()) {
+            alert('Please fill in both your name and game name.');
+            return;
+        }
+
+        createAndJoinGame(gameName, playerName, gameLength, mapId, router);
+    };
+
+    /**
+     * Handles back navigation to HomePage
+     */
+    const handleBack = () => {
+        router.push('/');
+    };
 
     return (
         <View style={styles.container}>
+
             {/* Back Button - Top Left */}
-            <TouchableOpacity style={styles.backButton} onPress={() => router.push('/')}>
+            <TouchableOpacity style={styles.backButton} onPress={handleBack}>
                 <Text style={styles.buttonText}>← Back</Text>
             </TouchableOpacity>
 
+            {/* Title */}
             <Text style={styles.title}>Create Game</Text>
 
             {/* Player Name Input */}
@@ -47,10 +79,13 @@ export default function CreateGame() {
             {/* Game Length Selection */}
             <Text style={styles.label}>Game Length:</Text>
             <View style={styles.optionContainer}>
-                {["Short", "Long"].map((value) => (
+                {['Short', 'Long'].map((value) => (
                     <TouchableOpacity
                         key={value}
-                        style={[styles.optionButton, gameLength === value && styles.selectedOption]}
+                        style={[
+                            styles.optionButton,
+                            gameLength === value && styles.selectedOption,
+                        ]}
                         onPress={() => setGameLength(value)}
                     >
                         <Text style={styles.optionText}>{value}</Text>
@@ -61,10 +96,14 @@ export default function CreateGame() {
             {/* Confirm Button - Bottom Right */}
             <TouchableOpacity
                 style={styles.confirmButton}
-                onPress={() => createAndJoinGame(gameName, playerName, gameLength, mapId, router)}
+                onPress={handleCreateGame}
                 disabled={loading}
             >
-                {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Confirm</Text>}
+                {loading ? (
+                    <ActivityIndicator color="#fff" />
+                ) : (
+                    <Text style={styles.buttonText}>Confirm</Text>
+                )}
             </TouchableOpacity>
         </View>
     );
@@ -72,11 +111,11 @@ export default function CreateGame() {
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#282c34',
-        paddingHorizontal: 20,
+        flex: 1, // Fill the screen
+        justifyContent: 'center', // Center vertically
+        alignItems: 'center', // Center horizontally
+        backgroundColor: '#282c34', // Dark background color
+        paddingHorizontal: 20, // Padding on the sides
     },
     title: {
         fontSize: 32,
@@ -112,7 +151,7 @@ const styles = StyleSheet.create({
         marginHorizontal: 5,
     },
     selectedOption: {
-        backgroundColor: '#4CAF50',
+        backgroundColor: '#4CAF50', // Highlight selected option
     },
     optionText: {
         color: 'white',
@@ -122,7 +161,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: 20,
         left: 20,
-        backgroundColor: '#D9534F',
+        backgroundColor: '#D9534F', // Red button for back
         paddingVertical: 10,
         paddingHorizontal: 20,
         borderRadius: 5,
@@ -131,7 +170,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: 20,
         right: 20,
-        backgroundColor: '#4CAF50',
+        backgroundColor: '#4CAF50', // Green button for confirm
         paddingVertical: 15,
         paddingHorizontal: 30,
         borderRadius: 5,

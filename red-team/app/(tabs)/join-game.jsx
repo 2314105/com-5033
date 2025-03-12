@@ -1,25 +1,59 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, FlatList, StyleSheet, ActivityIndicator, Alert, Dimensions } from 'react-native';
+import {
+    View,
+    Text,
+    TouchableOpacity,
+    TextInput,
+    FlatList,
+    StyleSheet,
+    ActivityIndicator,
+    Alert,
+    Dimensions,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import useForceLandscape from '@/hooks/useForceLandscape';
-import { useJoinGame } from '@/hooks/useJoinGame'; // Import the extracted hook
+import { useJoinGame } from '@/hooks/useJoinGame'; // Custom hook for joining games
 
 export default function JoinGame() {
-    useForceLandscape();
+    useForceLandscape(); // Lock orientation to landscape
     const router = useRouter();
-    const { games, loading, error, joinGame } = useJoinGame(); // Use the custom hook
+
+    // Destructure state and functions from custom hook
+    const { games, loading, error, joinGame } = useJoinGame();
+
     const [playerName, setPlayerName] = useState('');
 
-    // Get screen width
+    // Dynamically adjust card width based on screen size
     const screenWidth = Dimensions.get('window').width;
+
+    /**
+     * Handles joining a game after validating input.
+     * @param {string} gameId - ID of the game lobby to join.
+     */
+    const handleJoinGame = (gameId) => {
+        if (!playerName.trim()) {
+            Alert.alert('Missing Name', 'Please enter your player name before joining a game.');
+            return;
+        }
+
+        joinGame(gameId, playerName, router);
+    };
+
+    /**
+     * Handles back navigation.
+     */
+    const handleBack = () => {
+        router.push('/');
+    };
 
     return (
         <View style={styles.container}>
             {/* Back Button */}
-            <TouchableOpacity style={styles.backButton} onPress={() => router.push('/')}>
+            <TouchableOpacity style={styles.backButton} onPress={handleBack}>
                 <Text style={styles.buttonText}>← Back</Text>
             </TouchableOpacity>
 
+            {/* Title */}
             <Text style={styles.title}>Join a Game</Text>
 
             {/* Player Name Input */}
@@ -32,16 +66,17 @@ export default function JoinGame() {
                 onChangeText={setPlayerName}
             />
 
-            {/* Error Message */}
+            {/* Show error message if any */}
             {error && <Text style={styles.errorText}>{error}</Text>}
 
-            {/* Loading Indicator */}
+            {/* Loading indicator when fetching games */}
             {loading ? (
                 <ActivityIndicator size="large" color="white" />
             ) : (
                 <FlatList
                     data={games}
                     keyExtractor={(item) => item.gameId.toString()}
+                    contentContainerStyle={styles.listContent}
                     renderItem={({ item }) => (
                         <View style={[styles.lobbyCard, { width: screenWidth * 0.8 }]}>
                             <View style={styles.lobbyInfoContainer}>
@@ -53,12 +88,15 @@ export default function JoinGame() {
                             {/* Join Game Button */}
                             <TouchableOpacity
                                 style={styles.joinButton}
-                                onPress={() => joinGame(item.gameId, playerName, router)}
+                                onPress={() => handleJoinGame(item.gameId)}
                             >
                                 <Text style={styles.buttonText}>Join</Text>
                             </TouchableOpacity>
                         </View>
                     )}
+                    ListEmptyComponent={
+                        <Text style={styles.emptyText}>No games available. Try refreshing!</Text>
+                    }
                 />
             )}
         </View>
@@ -67,7 +105,7 @@ export default function JoinGame() {
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
+        flex: 1, // Fill screen
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: '#282c34',
@@ -109,6 +147,12 @@ const styles = StyleSheet.create({
         fontSize: 18,
         marginBottom: 10,
     },
+    emptyText: {
+        color: 'white',
+        fontSize: 16,
+        marginTop: 20,
+        textAlign: 'center',
+    },
     lobbyCard: {
         backgroundColor: '#444',
         borderRadius: 10,
@@ -117,7 +161,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        position: 'relative',
     },
     lobbyInfoContainer: {
         flex: 1,
@@ -144,5 +187,8 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    listContent: {
+        paddingBottom: 40, // Adds bottom padding so content isn't cut off on smaller screens
     },
 });

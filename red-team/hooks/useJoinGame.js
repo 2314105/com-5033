@@ -1,72 +1,75 @@
 import { useState, useEffect } from 'react';
+import { Alert } from 'react-native';
+import { apiRequest } from './api'; // Import your centralized API handler
 
 /**
- * Handling game fetching and joining.
+ * Custom hook for fetching available games and handling joining a game lobby.
  */
 export const useJoinGame = () => {
-    const [games, setGames] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [games, setGames] = useState([]);     // List of available game lobbies
+    const [loading, setLoading] = useState(true); // Loading state for fetching games
+    const [error, setError] = useState(null);     // Error message if fetching fails
 
-    // Fetch available games from API
-    useEffect(() => {
-        const fetchGames = async () => {
-            try {
-                const response = await fetch('http://trinity-developments.co.uk/games');
-                const data = await response.json();
+    /**
+     * Fetches all available games from the backend API.
+     */
+    const fetchGames = async () => {
+        setLoading(true);
+        setError(null);
 
-                if (response.ok) {
-                    const sortedGames = data.games.sort((a, b) => b.gameId - a.gameId);
-                    setGames(sortedGames);
-                } else {
-                    setError(data.message || 'Failed to fetch games.');
-                }
-            } catch (err) {
-                console.error('Failed to fetch games:', err);
-                setError('Error fetching games. Please try again.');
-            } finally {
-                setLoading(false);
-            }
-        };
+        try {
+            const data = await apiRequest('/games'); // Using the centralized apiRequest!
 
-        fetchGames();
-    }, []);
+            const sortedGames = data.games.sort((a, b) => b.gameId - a.gameId);
+            setGames(sortedGames);
+        } catch (err) {
+            console.error('Fetch Games Error:', err.message);
+            setError(err.message || 'Error fetching games. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    // Function to join a game
+    /**
+     * Join a game lobby as a player.
+     * @param {string|number} gameId - ID of the game lobby to join.
+     * @param {string} playerName - Name of the player joining.
+     * @param {object} router - Router instance from expo-router for navigation.
+     */
     const joinGame = async (gameId, playerName, router) => {
         if (!playerName.trim()) {
-            alert("Enter Name", "Please enter a player name before joining.");
+            Alert.alert('Missing Name', 'Please enter a player name before joining.');
             return;
         }
 
         try {
-            console.log(`Joining game: ${gameId} as ${playerName}`);
-            const response = await fetch(`http://trinity-developments.co.uk/games/${gameId}/players`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ playerName }),
+            console.log(`Joining game ${gameId} as player "${playerName}"`);
+
+            const data = await apiRequest(`/games/${gameId}/players`, 'POST', {
+                playerName,
             });
 
-            const data = await response.json();
+            console.log('Joined game successfully:', data);
 
-            if (response.ok) {
-                console.log('Joined game successfully:', data);
-
-                // ✅ Send player to the LOBBY, not the game directly
-                router.push({
-                    pathname: `/lobby/${gameId}`,
-                    params: { playerId: data.playerId }
-                });
-
-            } else {
-                console.warn("API error:", data.message);
-                alert(data.message || "Failed to join game.");
-            }
+            router.push({
+                pathname: `/lobby/${gameId}`,
+                params: { playerId: data.playerId },
+            });
         } catch (error) {
-            console.error('Error joining game:', error);
-            alert('Failed to join game. Please try again.');
+            console.error('Join Game Error:', error.message);
+            Alert.alert('Join Failed', error.message || 'Failed to join game.');
         }
     };
 
-    return { games, loading, error, joinGame };
+    // Fetch games when hook mounts
+    useEffect(() => {
+        fetchGames();
+    }, []);
+
+    return {
+        games,
+        loading,
+        error,
+        joinGame,
+    };
 };

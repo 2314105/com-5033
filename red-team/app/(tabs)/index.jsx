@@ -1,41 +1,63 @@
 import React, { useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import useForceLandscape from '@/hooks/useForceLandscape';
-import { useGameAPI } from '@/hooks/useGameAPI'; // Import custom API hook
+import { useGameAPI } from '@/hooks/useGameAPI';
 
 export default function HomePage() {
-  useForceLandscape();
+  useForceLandscape();    // Enforce landscape mode when this screen is rendered
   const router = useRouter();
-  const { games, loading, error, navigationLoading, fetchGames, navigateToJoinGame } = useGameAPI();
 
-  // Fetch games when the component loads
+  // Destructure values from the custom useGameAPI hook
+  const {
+    games,
+    loading,                // Boolean: true when fetching games list
+    error,                  // String or object: error info if fetch failed
+    navigationLoading,      // Boolean: true when navigating to join game
+    fetchGames,             // Function: triggers fetching games list
+    navigateToJoinGame      // Function: handles joining a game and navigation
+  } = useGameAPI();
+
+  // Fetch games when the component mounts
   useEffect(() => {
     fetchGames();
   }, []);
 
+  // Handlers for navigation buttons
+  const handleCreateGame = () => router.push('/create-game');
+  const handleJoinGame = () => navigateToJoinGame(router);
+  const handleHowToPlay = () => router.push('/how-to-play');
+  const handleSettings = () => router.push('/settings');
+
   return (
       <View style={styles.container}>
+        {/* Title */}
         <Text style={styles.title}>Not A Scotland Yard Game</Text>
 
-        <TouchableOpacity style={styles.button} onPress={() => router.push('/create-game')}>
+        {/* Main Buttons */}
+        <TouchableOpacity style={styles.button} onPress={handleCreateGame}>
           <Text style={styles.buttonText}>Create Game</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={() => navigateToJoinGame(router)}>
+        <TouchableOpacity style={styles.button} onPress={handleJoinGame}>
           <Text style={styles.buttonText}>Join Game</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={() => router.push('/how-to-play')}>
+        <TouchableOpacity style={styles.button} onPress={handleHowToPlay}>
           <Text style={styles.buttonText}>How to Play</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={() => router.push('/settings')}>
+        <TouchableOpacity style={styles.button} onPress={handleSettings}>
           <Text style={styles.buttonText}>Settings</Text>
         </TouchableOpacity>
 
-        {loading && <Text>Loading...</Text>}
+        {/* Show loading indicator while fetching games */}
+        {loading && <Text>Loading games...</Text>}
 
+        {/* Display any error that occurred while fetching games */}
+        {error && <Text style={styles.errorText}>Failed to load games. Please try again.</Text>}
+
+        {/* Overlay loading indicator when navigating to join game */}
         {navigationLoading && (
             <View style={styles.overlay}>
               <ActivityIndicator size="large" color="#fff" />
@@ -74,20 +96,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  gamesList: {
-    marginTop: 20,
-    width: '100%',
-    maxWidth: 300,
-  },
-  gameItem: {
-    backgroundColor: '#333',
-    padding: 15,
-    marginVertical: 5,
-    borderRadius: 8,
-  },
-  gameItemText: {
-    color: 'white',
-  },
   overlay: {
     position: 'absolute',
     top: 0,
@@ -101,6 +109,10 @@ const styles = StyleSheet.create({
   },
   overlayText: {
     color: 'white',
+    marginTop: 10,
+  },
+  errorText: {
+    color: 'red',
     marginTop: 10,
   },
 });
