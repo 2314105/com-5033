@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert } from 'react-native'; // Import Alert from react-native for alerts
+import { Alert } from 'react-native';
 
 /**
  * Custom hook to fetch and handle game-related data.

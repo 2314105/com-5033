@@ -1,6 +1,6 @@
 // hooks/useCreateGame.js
 import { useState } from 'react';
-import { apiRequest } from './api'; // 👈 Import the centralized API handler
+import { apiRequest } from './api';
 
 /**
  * Custom hook for handling game creation and joining.

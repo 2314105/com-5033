@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
-import { apiRequest } from './api'; // Import your centralized API handler
+import { apiRequest } from './api';
 
 /**
  * Custom hook for fetching available games and handling joining a game lobby.
@@ -18,7 +18,7 @@ export const useJoinGame = () => {
         setError(null);
 
         try {
-            const data = await apiRequest('/games'); // Using the centralized apiRequest!
+            const data = await apiRequest('/games');
 
             const sortedGames = data.games.sort((a, b) => b.gameId - a.gameId);
             setGames(sortedGames);

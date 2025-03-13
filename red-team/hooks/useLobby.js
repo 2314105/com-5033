@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Alert } from 'react-native';
-import { apiRequest } from './api'; // ✅ Import your centralized API handler
+import { apiRequest } from './api';
 
 /**
  * Custom hook for handling lobby data and leaving logic.
@@ -27,7 +27,7 @@ export const useLobby = (gameId, playerId, router) => {
         try {
             console.log(`Fetching details for gameId: ${gameId}`);
 
-            const data = await apiRequest(`/games/${gameId}`); // ✅ Refactored to use apiRequest
+            const data = await apiRequest(`/games/${gameId}`);
 
             if (!isMounted.current) return; // Don't update state if component is unmounted
 
@@ -62,7 +62,7 @@ export const useLobby = (gameId, playerId, router) => {
                             try {
                                 console.log(`Removing playerId: ${playerId} from gameId: ${gameId}`);
 
-                                await apiRequest(`/players/${playerId}`, 'DELETE'); // ✅ Refactored to use apiRequest
+                                await apiRequest(`/players/${playerId}`, 'DELETE');
 
                                 if (!isMounted.current) return; // Extra safety, probably not needed here though
 
